@@ -12,7 +12,7 @@ import android.util.Log;
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class MyTileService extends TileService {
     private static final String TAG = "MyTileService";
-    public static final String TILE_ID = "net.sourceforge.opencamera.TILE_CAMERA";
+    public static final String TILE_ID = "com.liusida.opencamera.TILE_CAMERA";
 
     @Override
     public void onDestroy() {

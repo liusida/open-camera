@@ -179,11 +179,11 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
     private boolean push_switched_camera = false; // whether to display animation for switching front/back cameras
 
     // application shortcuts:
-    static private final String ACTION_SHORTCUT_CAMERA = "net.sourceforge.opencamera.SHORTCUT_CAMERA";
-    static private final String ACTION_SHORTCUT_SELFIE = "net.sourceforge.opencamera.SHORTCUT_SELFIE";
-    static private final String ACTION_SHORTCUT_VIDEO = "net.sourceforge.opencamera.SHORTCUT_VIDEO";
-    static private final String ACTION_SHORTCUT_GALLERY = "net.sourceforge.opencamera.SHORTCUT_GALLERY";
-    static private final String ACTION_SHORTCUT_SETTINGS = "net.sourceforge.opencamera.SHORTCUT_SETTINGS";
+    static private final String ACTION_SHORTCUT_CAMERA = "com.liusida.opencamera.SHORTCUT_CAMERA";
+    static private final String ACTION_SHORTCUT_SELFIE = "com.liusida.opencamera.SHORTCUT_SELFIE";
+    static private final String ACTION_SHORTCUT_VIDEO = "com.liusida.opencamera.SHORTCUT_VIDEO";
+    static private final String ACTION_SHORTCUT_GALLERY = "com.liusida.opencamera.SHORTCUT_GALLERY";
+    static private final String ACTION_SHORTCUT_SETTINGS = "com.liusida.opencamera.SHORTCUT_SETTINGS";
 
     private static final int CHOOSE_SAVE_FOLDER_SAF_CODE = 42;
     private static final int CHOOSE_GHOST_IMAGE_SAF_CODE = 43;
