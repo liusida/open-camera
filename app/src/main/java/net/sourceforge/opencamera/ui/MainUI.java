@@ -3072,7 +3072,8 @@ public class MainUI {
                         AnimationSet animation_set = new AnimationSet(false);
                         animation_set.addAnimation(animation);
                         animation_set.addAnimation(fade_animation);
-                        popup_container.setAnimation(animation_set);
+                        if( !modern_gui ) // Modern GUI: the card just appears, no zoom-in animation
+                            popup_container.setAnimation(animation_set);
                     }
                 }
         );
