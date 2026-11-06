@@ -11,7 +11,7 @@ import android.util.Log;
 import android.view.View;
 
 /** "Bright & clean" colour filter: three per-channel tone curves measured from a
- *  before/after pair edited in Google Photos (see filters/ in the repo). Brightens the
+ *  before/after pair edited in Google Photos. Brightens the
  *  midtones (about +0.12 at mid-grey), leaves shadows almost untouched, rolls highlights
  *  off smoothly and cools the upper tones slightly.
  *  Applied to saved photos (CPU, in PostProcessing) and to the live view (GPU shader on the
@@ -23,7 +23,7 @@ public class FilterCurves {
     /** Whether the filter is enabled; updated from settings by MainActivity. */
     public static volatile boolean enabled;
 
-    // output level (0-255) for each input level (0-255); generated from filters/out/my_ideal_curves_smoothed.csv
+    // output level (0-255) for each input level (0-255); measured per-channel curves, smoothed
     private static final int [] CURVE_R = {
             0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
             18, 19, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 33,
