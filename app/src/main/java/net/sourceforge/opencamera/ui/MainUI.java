@@ -286,15 +286,32 @@ public class MainUI {
         int preview_len = portrait ? preview_h : preview.getWidth();
         int parent_len = portrait ? parent_h : parent.getWidth();
         boolean pin = modern_gui && (parent_len - preview_len)/2 < controls_needed;
+        // Modern GUI, preview fits (e.g. 4:3): rather than the exact middle of the screen, centre it
+        // in the space above the busy bottom controls, so it doesn't look pushed down
+        final int controls_zone = (int) (150 * scale + 0.5f);
+        int offset = 0;
+        boolean shift = modern_gui && !pin;
+        if( shift )
+            offset = Math.max(0, (parent_len - controls_zone - preview_len) / 2);
+        boolean place = pin || shift; // align to the far edge (with offset) instead of centring
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)preview.getLayoutParams();
         boolean changed = false;
+        {
+            int top = portrait ? offset : 0;
+            int left = pin_rule == RelativeLayout.ALIGN_PARENT_LEFT ? offset : 0;
+            int right = pin_rule == RelativeLayout.ALIGN_PARENT_RIGHT ? offset : 0;
+            if( layoutParams.topMargin != top || layoutParams.leftMargin != left || layoutParams.rightMargin != right || layoutParams.bottomMargin != 0 ) {
+                layoutParams.setMargins(left, top, right, 0);
+                changed = true;
+            }
+        }
         int [][] wanted_rules = {
-                {RelativeLayout.CENTER_IN_PARENT, pin ? 0 : RelativeLayout.TRUE},
-                {RelativeLayout.CENTER_HORIZONTAL, pin && centre_rule == RelativeLayout.CENTER_HORIZONTAL ? RelativeLayout.TRUE : 0},
-                {RelativeLayout.CENTER_VERTICAL, pin && centre_rule == RelativeLayout.CENTER_VERTICAL ? RelativeLayout.TRUE : 0},
-                {RelativeLayout.ALIGN_PARENT_TOP, pin && pin_rule == RelativeLayout.ALIGN_PARENT_TOP ? RelativeLayout.TRUE : 0},
-                {RelativeLayout.ALIGN_PARENT_LEFT, pin && pin_rule == RelativeLayout.ALIGN_PARENT_LEFT ? RelativeLayout.TRUE : 0},
-                {RelativeLayout.ALIGN_PARENT_RIGHT, pin && pin_rule == RelativeLayout.ALIGN_PARENT_RIGHT ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.CENTER_IN_PARENT, place ? 0 : RelativeLayout.TRUE},
+                {RelativeLayout.CENTER_HORIZONTAL, place && centre_rule == RelativeLayout.CENTER_HORIZONTAL ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.CENTER_VERTICAL, place && centre_rule == RelativeLayout.CENTER_VERTICAL ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_TOP, place && pin_rule == RelativeLayout.ALIGN_PARENT_TOP ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_LEFT, place && pin_rule == RelativeLayout.ALIGN_PARENT_LEFT ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_RIGHT, place && pin_rule == RelativeLayout.ALIGN_PARENT_RIGHT ? RelativeLayout.TRUE : 0},
         };
         for(int [] rule : wanted_rules) {
             if( layoutParams.getRule(rule[0]) != rule[1] ) {
