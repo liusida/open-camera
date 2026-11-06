@@ -8,6 +8,7 @@ import net.sourceforge.opencamera.PreferenceKeys;
 import net.sourceforge.opencamera.preview.Preview;
 import net.sourceforge.opencamera.R;
 
+import android.graphics.drawable.Drawable;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -185,6 +186,65 @@ public class MainUI {
         }
     }
 
+    private boolean modern_gui;
+    private Drawable orig_switch_camera_background;
+    private ColorStateList orig_switch_camera_background_tint;
+
+    private boolean isModernGUI() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(main_activity);
+        return sharedPreferences.getBoolean(PreferenceKeys.ModernGUIPreferenceKey, false);
+    }
+
+    /** Applies (or reverts) the Modern GUI styling of the bottom controls. Positions follow the
+     *  normal layout; we only change sizes, backgrounds and margins so the side buttons line up
+     *  with the centre of the shutter.
+     */
+    private void applyBottomControlsStyle(int navigation_gap) {
+        final float scale = main_activity.getResources().getDisplayMetrics().density;
+        ImageButton take_photo = main_activity.findViewById(R.id.take_photo);
+        ImageButton switch_camera = main_activity.findViewById(R.id.switch_camera);
+        ImageButton switch_video = main_activity.findViewById(R.id.switch_video);
+        if( orig_switch_camera_background == null ) {
+            orig_switch_camera_background = switch_camera.getBackground();
+            orig_switch_camera_background_tint = switch_camera.getBackgroundTintList();
+        }
+        final int shutter_size = take_photo.getLayoutParams().width; // 100dp
+        if( modern_gui ) {
+            final int side_size = (int) (44 * scale + 0.5f);
+            final int side_padding = (int) (10 * scale + 0.5f);
+            final int centre_offset = (shutter_size - side_size) / 2;
+            int shutter_padding = (int) (14 * scale + 0.5f);
+            take_photo.setPadding(shutter_padding, shutter_padding, shutter_padding, shutter_padding);
+            for(ImageButton view : new ImageButton[]{switch_camera, switch_video}) {
+                RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+                layoutParams.width = side_size;
+                layoutParams.height = side_size;
+                setMarginsForSystemUI(layoutParams, 0, 0, navigation_gap + centre_offset, 0);
+                view.setLayoutParams(layoutParams);
+                view.setPadding(side_padding, side_padding, side_padding, side_padding);
+                view.setBackgroundResource(R.drawable.modern_button_background);
+                view.setBackgroundTintList(null);
+                view.setAlpha(1.0f);
+            }
+        }
+        else {
+            final int padding = (int) (10 * scale + 0.5f);
+            final int side_size = (int) (60 * scale + 0.5f);
+            take_photo.setPadding(padding, padding, padding, padding);
+            for(ImageButton view : new ImageButton[]{switch_camera, switch_video}) {
+                RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+                layoutParams.width = side_size;
+                layoutParams.height = side_size;
+                view.setLayoutParams(layoutParams);
+                view.setPadding(padding, padding, padding, padding);
+            }
+            switch_camera.setBackground(orig_switch_camera_background);
+            switch_camera.setBackgroundTintList(orig_switch_camera_background_tint);
+            switch_video.setBackground(null);
+            switch_video.setAlpha(0.61f); // as in activity_main.xml
+        }
+    }
+
     public void layoutUI() {
         layoutUI(false);
     }
@@ -233,6 +293,7 @@ public class MainUI {
 
         // we cache the preference_ui_placement to save having to check it in the draw() method
         this.ui_placement = computeUIPlacement();
+        this.modern_gui = isModernGUI();
         if( MyDebug.LOG )
             Log.d(TAG, "ui_placement: " + ui_placement);
         int relative_orientation;
@@ -496,6 +557,18 @@ public class MainUI {
             }
 
             int button_size = main_activity.getResources().getDimensionPixelSize(R.dimen.onscreen_button_size);
+            final boolean modern_top = modern_gui && ui_placement == UIPlacement.UIPLACEMENT_TOP;
+            if( modern_top ) {
+                // Modern GUI: smaller 48dp touch targets with 24dp glyphs
+                button_size = (int) (48 * scale + 0.5f);
+            }
+            {
+                final int icon_padding = (int) ((modern_top ? 12 : 10) * scale + 0.5f);
+                for(View this_view : buttons_permanent) {
+                    if( this_view.getId() != R.id.gallery )
+                        this_view.setPadding(icon_padding, icon_padding, icon_padding, icon_padding);
+                }
+            }
             if( ui_placement == UIPlacement.UIPLACEMENT_TOP ) {
                 // need to dynamically lay out the permanent icons
 
@@ -529,7 +602,13 @@ public class MainUI {
 					}*/
                     int total_button_size = count*button_size;
                     int margin = 0;
-                    if( total_button_size > display_height ) {
+                    int group_offset = 0; // Modern GUI: extra space before/after the centred group
+                    if( modern_top && count > 1 && total_button_size + (count-1)*(int)(24 * scale + 0.5f) <= display_height ) {
+                        // Modern GUI: group icons in the centre, 72dp apart (centre to centre)
+                        margin = (int) (24 * scale + 0.5f);
+                        group_offset = (display_height - total_button_size - (count-1)*margin) / 2;
+                    }
+                    else if( total_button_size > display_height ) {
                         if( MyDebug.LOG )
                             Log.d(TAG, "need to reduce button size");
                         button_size = display_height / count;
@@ -559,8 +638,8 @@ public class MainUI {
                             // is displayed (when taking a photo) if it is still shown left-most, rather than centred; also
                             // needed for "pause preview" trash/icons to be shown properly (test by rotating the phone to update
                             // the layout)
-                            int margin_first = this_view==first_visible_view ? navigation_gap_reverse_landscape : margin/2;
-                            int margin_last = this_view==last_visible_view ? navigation_gap_landscape : margin/2;
+                            int margin_first = this_view==first_visible_view ? Math.max(navigation_gap_reverse_landscape, group_offset) : margin/2;
+                            int margin_last = this_view==last_visible_view ? Math.max(navigation_gap_landscape, group_offset) : margin/2;
                             // avoid risk of privacy dot appearing on top of icon - in practice this is only a risk when in
                             // reverse landscape mode, but we apply in all orientations to avoid icons jumping about;
                             // similarly, as noted above we use a hardcoded dp rather than
@@ -696,6 +775,9 @@ public class MainUI {
             setMarginsForSystemUI(layoutParams, 0, 0, navigation_gap, 0);
             view.setLayoutParams(layoutParams);
             setViewRotation(view, ui_rotation);
+
+            applyBottomControlsStyle(navigation_gap);
+            setTakePhotoIcon(); // shutter/switch icons depend on the Modern GUI setting
 
             view = main_activity.findViewById(R.id.zoom_seekbar);
             layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
@@ -1072,7 +1154,7 @@ public class MainUI {
             if( main_activity.getPreview().isVideo() ) {
                 if( MyDebug.LOG )
                     Log.d(TAG, "set icon to video");
-                resource = main_activity.getPreview().isVideoRecording() ? R.drawable.take_video_recording : R.drawable.take_video_selector;
+                resource = main_activity.getPreview().isVideoRecording() ? R.drawable.take_video_recording : (isModernGUI() ? R.drawable.take_video_selector_modern : R.drawable.take_video_selector);
                 content_description = main_activity.getPreview().isVideoRecording() ? R.string.stop_video : R.string.start_video;
                 switch_video_content_description = R.string.switch_to_photo;
             }
@@ -1087,7 +1169,7 @@ public class MainUI {
             else {
                 if( MyDebug.LOG )
                     Log.d(TAG, "set icon to photo");
-                resource = R.drawable.take_photo_selector;
+                resource = isModernGUI() ? R.drawable.take_photo_selector_modern : R.drawable.take_photo_selector;
                 content_description = R.string.take_photo;
                 switch_video_content_description = R.string.switch_to_video;
             }
@@ -1097,7 +1179,10 @@ public class MainUI {
 
             view = main_activity.findViewById(R.id.switch_video);
             view.setContentDescription( main_activity.getResources().getString(switch_video_content_description) );
-            resource = main_activity.getPreview().isVideo() ? R.drawable.take_photo : R.drawable.take_video;
+            if( isModernGUI() )
+                resource = main_activity.getPreview().isVideo() ? R.drawable.ic_modern_photo : R.drawable.ic_modern_video;
+            else
+                resource = main_activity.getPreview().isVideo() ? R.drawable.take_photo : R.drawable.take_video;
             view.setImageResource(resource);
             view.setTag(resource); // for testing
         }

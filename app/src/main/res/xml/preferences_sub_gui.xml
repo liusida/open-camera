@@ -2,6 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:key="preferences_root">
 
+    <SwitchPreference
+        android:key="preference_modern_gui"
+        android:title="@string/preference_modern_gui"
+        android:summary="@string/preference_modern_gui_summary"
+        android:defaultValue="false"
+        />
+
     <ListPreference
         android:key="preference_ui_placement"
         android:title="@string/preference_ui_placement"

@@ -197,6 +197,8 @@ public class PreferenceKeys {
 
     public static final String UIPlacementPreferenceKey = "preference_ui_placement";
 
+    public static final String ModernGUIPreferenceKey = "preference_modern_gui";
+
     public static final String TouchCapturePreferenceKey = "preference_touch_capture";
 
     public static final String PausePreviewPreferenceKey = "preference_pause_preview";
