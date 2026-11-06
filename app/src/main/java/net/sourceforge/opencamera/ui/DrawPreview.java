@@ -101,6 +101,7 @@ public class DrawPreview {
     private boolean preview_size_wysiwyg_pref;
     private String crop_guide_pref;
     private boolean store_location_pref;
+    private boolean show_store_location_pref;
     private boolean show_angle_line_pref;
     private boolean show_pitch_lines_pref;
     private boolean show_geo_direction_lines_pref;
@@ -685,6 +686,7 @@ public class DrawPreview {
         preview_size_wysiwyg_pref = sharedPreferences.getString(PreferenceKeys.PreviewSizePreferenceKey, "preference_preview_size_wysiwyg").equals("preference_preview_size_wysiwyg");
         crop_guide_pref = sharedPreferences.getString(PreferenceKeys.ShowCropGuidePreferenceKey, "crop_guide_none");
         store_location_pref = sharedPreferences.getBoolean(PreferenceKeys.LocationPreferenceKey, false);
+        show_store_location_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowStoreLocationPreferenceKey, false);
 
         show_angle_line_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowAngleLinePreferenceKey, false);
         show_pitch_lines_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowPitchLinesPreferenceKey, false);
@@ -1457,7 +1459,7 @@ public class DrawPreview {
                 location_x2 = location_x - icon_size + flash_padding;
             }
 
-            if( store_location_pref ) {
+            if( store_location_pref && show_store_location_pref ) {
                 icon_dest.set(location_x2, location_y, location_x2 + icon_size, location_y + icon_size);
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(Color.BLACK);
