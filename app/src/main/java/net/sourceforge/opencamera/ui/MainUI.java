@@ -245,6 +245,42 @@ public class MainUI {
         }
     }
 
+    private boolean preview_layout_listener_added;
+    private int top_stack_top_id; // Modern GUI: id of the top-most icon of the bottom-left stack
+    private boolean top_icons_stacked; // Modern GUI: top icons moved to a small stack at the bottom-left
+
+    /** Modern GUI, portrait: if a centred preview would run into the shutter row (e.g. 16:9
+     *  on a tall phone), pin it to the top instead, so the icons float over the image (with a
+     *  gradient) and all spare space goes to the bottom controls. Otherwise (e.g. 4:3) keep it
+     *  centred as in the original GUI.
+     */
+    private void updateModernPreviewPlacement() {
+        View preview = main_activity.findViewById(R.id.preview);
+        View scrim = main_activity.findViewById(R.id.modern_top_scrim);
+        View parent = (View)preview.getParent();
+        int preview_h = preview.getHeight();
+        int parent_h = parent.getHeight();
+        if( preview_h == 0 || parent_h == 0 )
+            return;
+        final float scale = main_activity.getResources().getDisplayMetrics().density;
+        final int bottom_needed = (int) (110 * scale + 0.5f); // shutter row + gap to navigation bar
+        boolean portrait = main_activity.getSystemOrientation() == MainActivity.SystemOrientation.PORTRAIT;
+        boolean pin = modern_gui && portrait && (parent_h - preview_h)/2 < bottom_needed;
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)preview.getLayoutParams();
+        boolean pinned = layoutParams.getRule(RelativeLayout.ALIGN_PARENT_TOP) != 0;
+        if( pin != pinned ) {
+            if( MyDebug.LOG )
+                Log.d(TAG, "modern gui: pin preview to top: " + pin);
+            layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, pin ? 0 : RelativeLayout.TRUE);
+            layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, pin ? RelativeLayout.TRUE : 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, pin ? RelativeLayout.TRUE : 0);
+            preview.setLayoutParams(layoutParams);
+        }
+        int scrim_visibility = pin && !top_icons_stacked ? View.VISIBLE : View.GONE;
+        if( scrim.getVisibility() != scrim_visibility )
+            scrim.setVisibility(scrim_visibility);
+    }
+
     public void layoutUI() {
         layoutUI(false);
     }
@@ -565,8 +601,13 @@ public class MainUI {
             {
                 final int icon_padding = (int) ((modern_top ? 12 : 10) * scale + 0.5f);
                 for(View this_view : buttons_permanent) {
-                    if( this_view.getId() != R.id.gallery )
+                    if( this_view.getId() != R.id.gallery ) {
                         this_view.setPadding(icon_padding, icon_padding, icon_padding, icon_padding);
+                        // Modern GUI: no square shaded background behind top icons (the top scrim keeps them readable)
+                        Drawable background = this_view.getBackground();
+                        if( background != null )
+                            background.mutate().setAlpha(modern_top ? 0 : 255);
+                    }
                 }
             }
             if( ui_placement == UIPlacement.UIPLACEMENT_TOP ) {
@@ -655,7 +696,43 @@ public class MainUI {
                     top_icon = first_visible_view;
                 }
             }
-            else {
+            top_icons_stacked = false;
+            if( modern_top && system_orientation_portrait ) {
+                // Modern GUI (portrait): move the top icons into a small vertical stack in the
+                // bottom-left corner, beside the video button, vertically centred on the shutter.
+                // Only if few icons are visible; otherwise keep the top row.
+                List<View> visible = new ArrayList<>();
+                for(View this_view : buttons_permanent) {
+                    if( this_view.getVisibility() == View.VISIBLE )
+                        visible.add(this_view);
+                }
+                if( !visible.isEmpty() && visible.size() <= 3 ) {
+                    top_icons_stacked = true;
+                    final int small_size = (int) (32 * scale + 0.5f);
+                    final int small_padding = (int) (7 * scale + 0.5f); // 18dp glyph
+                    final int left_margin = (int) (20 * scale + 0.5f);
+                    final int shutter_half = (int) (50 * scale + 0.5f); // take_photo is 100dp
+                    // centre the stack on the shutter centre
+                    int bottom_margin = navigation_gap + shutter_half - (visible.size() * small_size) / 2;
+                    // buttons_permanent is ordered settings, popup, exposure: settings at the bottom
+                    for(View this_view : visible) {
+                        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)this_view.getLayoutParams();
+                        int [] rules = lp.getRules();
+                        for(int i=0;i<rules.length;i++)
+                            lp.removeRule(i);
+                        lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+                        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+                        lp.setMargins(left_margin, 0, 0, bottom_margin);
+                        lp.width = small_size;
+                        lp.height = small_size;
+                        this_view.setLayoutParams(lp);
+                        this_view.setPadding(small_padding, small_padding, small_padding, small_padding);
+                        bottom_margin += small_size;
+                        top_stack_top_id = this_view.getId();
+                    }
+                }
+            }
+            if( ui_placement != UIPlacement.UIPLACEMENT_TOP ) {
                 // need to reset size/margins to their default
                 // except for gallery, which still needs its margins set for navigation gap! (and we
                 // shouldn't change it's size, which isn't necessarily button_size)
@@ -777,6 +854,12 @@ public class MainUI {
             setViewRotation(view, ui_rotation);
 
             applyBottomControlsStyle(navigation_gap);
+            if( !preview_layout_listener_added ) {
+                preview_layout_listener_added = true;
+                main_activity.findViewById(R.id.preview).addOnLayoutChangeListener(
+                        (v, l, t, r, b, ol, ot, or, ob) -> v.post(this::updateModernPreviewPlacement));
+            }
+            main_activity.findViewById(R.id.preview).post(this::updateModernPreviewPlacement);
             setTakePhotoIcon(); // shutter/switch icons depend on the Modern GUI setting
 
             view = main_activity.findViewById(R.id.zoom_seekbar);
@@ -977,6 +1060,14 @@ public class MainUI {
             if( system_orientation_portrait ) {
                 // limit height so doesn't take up full height of screen
                 layoutParams.height = display_height;
+            }
+            if( top_icons_stacked && system_orientation_portrait ) {
+                // Modern GUI: icons are in the bottom-left stack, so open the popup just above it
+                int [] rules = layoutParams.getRules();
+                for(int i=0;i<rules.length;i++)
+                    layoutParams.removeRule(i);
+                layoutParams.addRule(RelativeLayout.ABOVE, top_stack_top_id);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
             }
             view.setLayoutParams(layoutParams);
 

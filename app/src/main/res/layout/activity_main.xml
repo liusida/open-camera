@@ -11,6 +11,16 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         />
+
+    <!-- Modern GUI: soft gradient so top icons stay readable when the preview is pinned to the top -->
+    <View
+        android:id="@+id/modern_top_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/modern_top_scrim"
+        android:visibility="gone"
+        />
     
     <ImageButton
         android:id="@+id/take_photo"
