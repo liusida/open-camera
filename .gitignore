@@ -24,3 +24,6 @@ testdata/
 
 local.properties
 uninstall.bat
+
+# design mockups and comparison images (kept locally as a historical record)
+design/
