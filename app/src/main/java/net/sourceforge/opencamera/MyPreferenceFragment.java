@@ -766,6 +766,12 @@ public class MyPreferenceFragment extends PreferenceFragment implements OnShared
         if( edge_to_edge_mode ) {
             handleEdgeToEdge(view);
         }
+
+        if( ModernSettingsStyle.isEnabled(getActivity()) ) {
+            // Modern GUI: smaller icons and text, tighter rows
+            ModernSettingsStyle.shrinkIcons(getPreferenceScreen(), getResources().getDisplayMetrics().density);
+            ModernSettingsStyle.styleList(view.findViewById(android.R.id.list));
+        }
     }
 
     static void handleEdgeToEdge(View view) {

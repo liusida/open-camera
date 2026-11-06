@@ -41,6 +41,12 @@ public class PreferenceSubScreen extends PreferenceFragment implements SharedPre
         if( edge_to_edge_mode ) {
             MyPreferenceFragment.handleEdgeToEdge(view);
         }
+
+        if( ModernSettingsStyle.isEnabled(getActivity()) ) {
+            // Modern GUI: smaller icons and text, tighter rows
+            ModernSettingsStyle.shrinkIcons(getPreferenceScreen(), getResources().getDisplayMetrics().density);
+            ModernSettingsStyle.styleList(view.findViewById(android.R.id.list));
+        }
     }
 
     @Override
