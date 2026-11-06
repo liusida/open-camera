@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern launcher icon: minimalist mirrorless camera body (prism hump, two top dials,
+     silver mount, dark glass, tiny red alignment dot). Fits the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.84" android:scaleY="0.84" android:translateY="1">
+    <path android:fillColor="#FF2C2C2C" android:pathData="M29.2,35h7.6a1.2,1.2 0,0 1,1.2 1.2v4.8h-10v-4.8a1.2,1.2 0,0 1,1.2 -1.2zM71.2,36h7.6a1.2,1.2 0,0 1,1.2 1.2v3.8h-10v-3.8a1.2,1.2 0,0 1,1.2 -1.2z"/>
+    <path android:fillColor="#FF1C1C1C" android:pathData="M28,40h52a6,6 0,0 1,6 6v25a6,6 0,0 1,-6 6h-52a6,6 0,0 1,-6 -6v-25a6,6 0,0 1,6 -6zM44,30h20l4,10h-28z"/>
+    <path android:fillColor="#FFC8C8C8" android:pathData="M54,44a15,15 0,1 1,0 30a15,15 0,1 1,0 -30z"/>
+    <path android:fillColor="#FF18262C" android:pathData="M54,47.5a11.5,11.5 0,1 1,0 23a11.5,11.5 0,1 1,0 -23z"/>
+    <path android:fillColor="#FF464646" android:pathData="M74,44.5a3.5,2.5 0,1 1,0 5a3.5,2.5 0,1 1,0 -5z"/>
+    <path android:fillColor="#FFE23B2B" android:pathData="M43.8,68.1a1.2,1.2 0,1 1,0 2.4a1.2,1.2 0,1 1,0 -2.4z"/>
+    </group>
+</vector>
