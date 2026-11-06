@@ -56,7 +56,7 @@ def main(before, after, name):
     err = np.abs(pred - b).mean() * 255; base = np.abs(a - b).mean() * 255
     print(f"mean abs error per channel: {base:.1f} (no filter) -> {err:.1f} (fitted LUT), in 0-255 units")
     print("colour matrix (rows: in R,G,B,offset):\n", M.round(3))
-    for src, tag in tqdm([(before, "reference"), (Path(__file__).parent.parent / "prototype/assets/camera-preview.jpg", "sample")], desc="render"):
+    for src, tag in tqdm([(before, "reference")], desc="render"):
         im = Image.open(src).convert("RGB"); im.thumbnail((1600, 1600), Image.LANCZOS)
         res = apply_lut(np.asarray(im, np.float32) / 255, lut)
         Image.fromarray((res * 255 + 0.5).astype(np.uint8)).save(OUT / f"{name}_{tag}.jpg", quality=90)

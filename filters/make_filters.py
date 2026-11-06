@@ -15,7 +15,7 @@ from PIL import Image
 from tqdm import tqdm
 
 HERE = Path(__file__).parent
-SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE.parent / "prototype/assets/camera-preview.jpg"
+SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "reference/before.jpg"
 OUT = HERE / "out"
 LUT_SIZE = 33
 PREVIEW_LONG_SIDE = 1600
