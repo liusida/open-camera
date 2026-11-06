@@ -254,6 +254,9 @@ public class MainUI {
     }
 
     private boolean preview_layout_listener_added;
+    private final List<View> stack_views = new ArrayList<>(); // Modern GUI: icons in the corner stack, first = nearest the screen edge
+    private int stack_small_size; // size of each stacked icon, in pixels
+    private int stack_navigation_gap;
     private int top_stack_top_id; // Modern GUI: id of the top-most icon of the bottom-left stack
     private boolean top_icons_stacked; // Modern GUI: top icons moved to a small stack at the bottom-left
 
@@ -302,9 +305,65 @@ public class MainUI {
                 Log.d(TAG, "modern gui: pin preview: " + pin);
             preview.setLayoutParams(layoutParams);
         }
+        else if( top_icons_stacked ) {
+            balanceIconStack(preview, parent, orientation);
+        }
         int scrim_visibility = pin && portrait && !top_icons_stacked ? View.VISIBLE : View.GONE;
         if( scrim.getVisibility() != scrim_visibility )
             scrim.setVisibility(scrim_visibility);
+    }
+
+    /** Modern GUI: once the preview has its final position, place the corner icon stack so the
+     *  spacing is balanced:
+     *  - across: centred between the screen edge and the video button (mirroring the gallery
+     *    thumbnail on the other side);
+     *  - along: centred on the shutter if that leaves a comfortable gap to the preview and the
+     *    navigation bar, otherwise centred in the free space between them (equal gaps).
+     *  Margins are in landscape-named terms (via setMarginsForSystemUI), so this works in all
+     *  orientations.
+     */
+    private void balanceIconStack(View preview, View parent, MainActivity.SystemOrientation orientation) {
+        if( stack_views.isEmpty() || stack_small_size == 0 )
+            return;
+        final float scale = main_activity.getResources().getDisplayMetrics().density;
+        boolean portrait = orientation == MainActivity.SystemOrientation.PORTRAIT;
+        boolean reverse = orientation == MainActivity.SystemOrientation.REVERSE_LANDSCAPE;
+        int short_len = portrait ? parent.getWidth() : parent.getHeight();
+        // free space between the preview and the controls-side screen edge
+        int free_len = portrait ? parent.getHeight() - preview.getBottom() :
+                reverse ? preview.getLeft() : parent.getWidth() - preview.getRight();
+        if( short_len == 0 || free_len <= 0 )
+            return;
+        final int n = stack_views.size();
+        final int stack_len = n * stack_small_size;
+        final int nav = stack_navigation_gap;
+        final int shutter_half = (int) (50 * scale + 0.5f);
+        final int min_gap = (int) (12 * scale + 0.5f);
+        int start; // distance from the screen edge (incl. navigation gap) to the start of the stack
+        int on_shutter = nav + shutter_half - stack_len / 2;
+        if( on_shutter - nav >= min_gap && free_len - (on_shutter + stack_len) >= min_gap )
+            start = on_shutter;
+        else {
+            // centre between the preview edge and the screen edge (what the eye sees), but keep
+            // the stack at least half the navigation gap away from the edge
+            start = Math.max(nav / 2, (free_len - stack_len) / 2);
+        }
+        // across: centre between screen edge and the video button (shutter 100dp, video 44dp, centred row)
+        int video_edge = short_len / 2 - shutter_half - (int) (44 * scale + 0.5f);
+        int side = Math.max((int) (6 * scale + 0.5f), (video_edge - stack_small_size) / 2);
+        boolean changed = false;
+        for(int i=0;i<n;i++) {
+            View v = stack_views.get(i);
+            RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)v.getLayoutParams();
+            int l = lp.leftMargin, t = lp.topMargin, r = lp.rightMargin, b = lp.bottomMargin;
+            setMarginsForSystemUI(lp, 0, 0, start + i * stack_small_size, side);
+            if( lp.leftMargin != l || lp.topMargin != t || lp.rightMargin != r || lp.bottomMargin != b ) {
+                v.setLayoutParams(lp);
+                changed = true;
+            }
+        }
+        if( MyDebug.LOG && changed )
+            Log.d(TAG, "balanceIconStack: start " + start + " side " + side + " free " + free_len);
     }
 
     public void layoutUI() {
@@ -746,8 +805,14 @@ public class MainUI {
                 }
                 if( !visible.isEmpty() && visible.size() <= 4 ) {
                     top_icons_stacked = true;
-                    final int small_size = (int) (32 * scale + 0.5f);
-                    final int small_padding = (int) (7 * scale + 0.5f); // 18dp glyph
+                    stack_views.clear();
+                    stack_views.addAll(visible);
+                    stack_navigation_gap = navigation_gap;
+                    // 18dp glyphs; tighter 28dp pitch for 4 icons so the stack fits below a 16:9 preview
+                    final int small_size_dp = visible.size() >= 4 ? 28 : 32;
+                    final int small_size = (int) (small_size_dp * scale + 0.5f);
+                    final int small_padding = (int) ((small_size_dp - 18) / 2.0f * scale + 0.5f);
+                    stack_small_size = small_size;
                     final int left_margin = (int) (20 * scale + 0.5f);
                     final int shutter_half = (int) (50 * scale + 0.5f); // take_photo is 100dp
                     // centre the stack on the shutter centre
