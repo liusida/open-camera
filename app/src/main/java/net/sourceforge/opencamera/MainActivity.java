@@ -5316,7 +5316,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         // (Disabling is done in checkDisableGUIIcons(), called below.)
         View exposureButton = findViewById(R.id.exposure);
         //exposureButton.setVisibility(supportsExposureButton() && !mainUI.inImmersiveMode() ? View.VISIBLE : View.GONE);
-        if( supportsExposureButton() && !mainUI.inImmersiveMode() )
+        if( supportsExposureButton() && !mainUI.inImmersiveMode() && !mainUI.isModernGUI() )
             exposureButton.setVisibility(View.VISIBLE);
 
         // needed as availability of some icons is per-camera (e.g., flash, RAW)

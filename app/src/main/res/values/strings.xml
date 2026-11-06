@@ -247,6 +247,7 @@
     <string name="take_photo">Take Photo</string>
     <string name="gallery">Gallery</string>
     <string name="exposure">Exposure</string>
+    <string name="reset">Reset</string>
     <string name="exposure_lock">Lock exposure</string>
     <string name="focus_mode">Focus Mode</string>
     <string name="flash_mode">Flash Mode</string>

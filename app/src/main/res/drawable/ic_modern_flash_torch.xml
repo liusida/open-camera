@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern GUI popup icon (same shape as the design mockup) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M6,2h12v5l-3,4v11H9V11L6,7zM12,13a1.5,1.5 0,1 0,0 3a1.5,1.5 0,0 0,0 -3z"/>
+</vector>

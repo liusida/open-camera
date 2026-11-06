@@ -10,6 +10,7 @@ import net.sourceforge.opencamera.preview.Preview;
 import net.sourceforge.opencamera.R;
 
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -188,6 +189,7 @@ public class MainUI {
     }
 
     private boolean modern_gui;
+    private boolean popup_view_modern; // whether the cached popup_view was built with the Modern GUI style
 
     /** Shows the filter icon bright when the filter is on, dimmed when off. */
     public void updateFilterToggleIcon() {
@@ -198,7 +200,7 @@ public class MainUI {
     private Drawable orig_switch_camera_background;
     private ColorStateList orig_switch_camera_background_tint;
 
-    private boolean isModernGUI() {
+    public boolean isModernGUI() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(main_activity);
         return sharedPreferences.getBoolean(PreferenceKeys.ModernGUIPreferenceKey, false);
     }
@@ -364,6 +366,239 @@ public class MainUI {
         }
         if( MyDebug.LOG && changed )
             Log.d(TAG, "balanceIconStack: start " + start + " side " + side + " free " + free_len);
+    }
+
+    // Modern GUI: the exposure panel (sliders_container) is moved into the popup card while it is open
+    private ViewGroup sliders_home_parent;
+    private int sliders_home_index = -1;
+    private ViewGroup.LayoutParams sliders_home_lp;
+    private ViewGroup.LayoutParams ev_row_home_lp;
+
+    /** Modern GUI: show the exposure compensation next to the EV slider, e.g. "+0.33 EV". */
+    private void updateModernEvValue() {
+        RelativeLayout ev_row = main_activity.findViewById(R.id.exposure_container);
+        if( ev_row == null )
+            return; // may run (posted) after the panel has left the popup
+        View v = ev_row.findViewWithTag("modern_ev_value");
+        if( !(v instanceof android.widget.TextView) || main_activity.getPreview() == null )
+            return;
+        String full = main_activity.getPreview().getExposureCompensationString(main_activity.getPreview().getCurrentExposure());
+        String label = main_activity.getResources().getString(R.string.exposure_compensation) + " ";
+        String ev = full.startsWith(label) ? full.substring(label.length()) : full; // e.g. "+0.33 EV"
+        try {
+            // mockup style: one decimal, no unit, no sign for zero ("0.0", "+0.3", "-1.0")
+            float f = Float.parseFloat(ev.replace("EV", "").trim().replace(",", "."));
+            String num = String.format(java.util.Locale.getDefault(), "%.1f", Math.abs(f));
+            ev = (Math.abs(f) < 0.05f ? "" : (f > 0 ? "+" : "\u2212")) + num;
+        }
+        catch(NumberFormatException e) {
+            // keep the full text
+        }
+        ((android.widget.TextView)v).setText(ev);
+    }
+
+    private boolean isExposureEmbedded() {
+        View sliders = main_activity.findViewById(R.id.sliders_container);
+        return popup_view != null && sliders.getParent() == popup_view;
+    }
+
+    private void embedExposureInPopup() {
+        View sliders = main_activity.findViewById(R.id.sliders_container);
+        if( popup_view == null || sliders.getParent() == popup_view )
+            return;
+        ViewGroup parent = (ViewGroup)sliders.getParent();
+        if( sliders_home_parent == null ) {
+            sliders_home_parent = parent;
+            sliders_home_index = parent.indexOfChild(sliders);
+            sliders_home_lp = sliders.getLayoutParams();
+        }
+        parent.removeView(sliders);
+        sliders.setRotation(0.0f);
+        sliders.setTranslationX(0.0f);
+        sliders.setTranslationY(0.0f);
+        sliders.setBackgroundColor(Color.TRANSPARENT);
+        final float scale = main_activity.getResources().getDisplayMetrics().density;
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        lp.bottomMargin = (int) (4 * scale + 0.5f);
+        popup_view.addView(sliders, 0, lp);
+        {
+            // divider below the exposure section
+            View line = new View(main_activity);
+            line.setTag("modern_exposure_divider");
+            line.setBackgroundColor(0x1AFFFFFF);
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, (int) (scale + 0.5f)));
+            final int m = (int) (9 * scale + 0.5f);
+            dlp.setMargins(0, m, 0, m);
+            popup_view.addView(line, 1, dlp);
+        }
+        {
+            // header: "EXPOSURE" label and a Reset chip (resets exposure compensation to 0)
+            LinearLayout header = new LinearLayout(main_activity);
+            header.setTag("modern_exposure_header");
+            header.setOrientation(LinearLayout.HORIZONTAL);
+            header.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            android.widget.TextView label = new android.widget.TextView(main_activity);
+            label.setText(main_activity.getResources().getString(R.string.exposure).toUpperCase(java.util.Locale.getDefault()));
+            label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11.5f);
+            label.setLetterSpacing(0.08f);
+            label.setTextColor(PopupView.MODERN_TITLE_FG);
+            label.setIncludeFontPadding(false);
+            label.setPadding((int) (2 * scale + 0.5f), (int) (8 * scale + 0.5f), 0, (int) (12 * scale + 0.5f)); // mockup: 8px section padding, label, 8px gap, 28px slider row
+            header.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+
+            ((ViewGroup)sliders).addView(header, 0, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            // EV row, as in the mockup: [slider ........ +0.0 EV  Reset], without the +/- icon
+            main_activity.findViewById(R.id.exposure_seekbar_text).setVisibility(View.GONE);
+            RelativeLayout ev_row = main_activity.findViewById(R.id.exposure_container);
+            ev_row_home_lp = ev_row.getLayoutParams();
+            ev_row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            android.widget.Button reset = new android.widget.Button(main_activity);
+            reset.setText(R.string.reset);
+            reset.setAllCaps(false);
+            reset.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12.0f);
+            reset.setTextColor(0xFFCCCCCC);
+            reset.setMinHeight(0);
+            reset.setMinimumHeight(0);
+            reset.setMinWidth(0);
+            reset.setMinimumWidth(0);
+            int ph = (int) (10 * scale + 0.5f), pv = (int) (4 * scale + 0.5f);
+            reset.setPadding(ph, pv, ph, pv);
+            GradientDrawable chip = new GradientDrawable();
+            chip.setColor(0x22FFFFFF);
+            chip.setCornerRadius(12 * scale);
+            reset.setBackground(chip);
+            reset.setStateListAnimator(null);
+            reset.setOnClickListener(v -> {
+                android.widget.SeekBar ev = main_activity.findViewById(R.id.exposure_seekbar);
+                ev.setProgress(main_activity.getExposureSeekbarProgressZero());
+                ev.post(this::updateModernEvValue);
+            });
+
+            reset.setId(View.generateViewId());
+            reset.setTag("modern_ev_reset");
+            RelativeLayout.LayoutParams reset_lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            reset_lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            reset_lp.addRule(RelativeLayout.CENTER_VERTICAL);
+            ev_row.addView(reset, reset_lp);
+            android.widget.TextView value = new android.widget.TextView(main_activity);
+            value.setTag("modern_ev_value");
+            value.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13.0f);
+            value.setTextColor(0xFFEEEEEE);
+            value.setFontFeatureSettings("tnum");
+            RelativeLayout.LayoutParams value_lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            value_lp.addRule(RelativeLayout.LEFT_OF, reset.getId());
+            value_lp.addRule(RelativeLayout.CENTER_VERTICAL);
+            value_lp.rightMargin = (int) (8 * scale + 0.5f);
+            ev_row.addView(value, value_lp);
+            // as in the mockup: EV slider first, then an "ISO" label and the ISO chips
+            ViewGroup sg = (ViewGroup)sliders;
+            View ev = main_activity.findViewById(R.id.exposure_container);
+            sg.removeView(ev);
+            sg.addView(ev, 1);
+            android.widget.TextView iso_label = new android.widget.TextView(main_activity);
+            iso_label.setTag("modern_iso_label");
+            iso_label.setText("ISO");
+            iso_label.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11.5f);
+            iso_label.setLetterSpacing(0.08f);
+            iso_label.setTextColor(PopupView.MODERN_TITLE_FG);
+            iso_label.setIncludeFontPadding(false);
+            iso_label.setPadding((int) (2 * scale + 0.5f), (int) (11 * scale + 0.5f), 0, (int) (9 * scale + 0.5f)); // mockup: margin-top 10px
+            sg.addView(iso_label, sg.indexOfChild(main_activity.findViewById(R.id.iso_container)));
+            setLayoutGravity(main_activity.findViewById(R.id.iso_container), android.view.Gravity.START); // chips left-aligned under the label
+        }
+        // while dragging an exposure slider, fade the rest of the card so the image shows through
+        View.OnTouchListener fade = (v, event) -> {
+            int action = event.getActionMasked();
+            if( action == android.view.MotionEvent.ACTION_DOWN )
+                setPopupFadedForAdjusting(true);
+            else if( action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_CANCEL )
+                setPopupFadedForAdjusting(false);
+            v.post(this::updateModernEvValue);
+            return false;
+        };
+        for(int id : new int[]{R.id.exposure_seekbar, R.id.iso_seekbar, R.id.exposure_time_seekbar, R.id.white_balance_seekbar}) {
+            View seekbar = main_activity.findViewById(id);
+            if( seekbar != null )
+                seekbar.setOnTouchListener(fade);
+        }
+    }
+
+    private void setPopupFadedForAdjusting(boolean faded) {
+        if( popup_view == null )
+            return;
+        View sliders = main_activity.findViewById(R.id.sliders_container);
+        for(int i=0;i<popup_view.getChildCount();i++) {
+            View child = popup_view.getChildAt(i);
+            if( child != sliders )
+                child.animate().alpha(faded ? 0.0f : 1.0f).setDuration(150).start();
+        }
+        View popup_container = main_activity.findViewById(R.id.popup_container);
+        if( popup_container.getBackground() != null )
+            popup_container.getBackground().setAlpha(faded ? 0 : 255);
+        if( faded ) {
+            final float scale = main_activity.getResources().getDisplayMetrics().density;
+            GradientDrawable backing = new GradientDrawable();
+            backing.setColor(0x99181818);
+            backing.setCornerRadius(16 * scale);
+            sliders.setBackground(backing);
+        }
+        else {
+            sliders.setBackgroundColor(Color.TRANSPARENT);
+        }
+    }
+
+    private static void setLayoutGravity(View view, int gravity) {
+        if( view != null && view.getLayoutParams() instanceof LinearLayout.LayoutParams ) {
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams)view.getLayoutParams();
+            lp.gravity = gravity;
+            view.setLayoutParams(lp);
+        }
+    }
+
+    private void restoreExposureFromPopup() {
+        View sliders = main_activity.findViewById(R.id.sliders_container);
+        if( sliders_home_parent == null || sliders.getParent() == sliders_home_parent )
+            return;
+        setPopupFadedForAdjusting(false);
+        for(int id : new int[]{R.id.exposure_seekbar, R.id.iso_seekbar, R.id.exposure_time_seekbar, R.id.white_balance_seekbar}) {
+            View seekbar = sliders.findViewById(id);
+            if( seekbar != null )
+                seekbar.setOnTouchListener(null);
+        }
+        ViewGroup sliders_parent = (ViewGroup)sliders.getParent();
+        View divider = sliders_parent.findViewWithTag("modern_exposure_divider");
+        if( divider != null )
+            sliders_parent.removeView(divider);
+        sliders_parent.removeView(sliders);
+        View header = sliders.findViewWithTag("modern_exposure_header");
+        if( header != null )
+            ((ViewGroup)sliders).removeView(header);
+        {
+            RelativeLayout ev_row = sliders.findViewById(R.id.exposure_container);
+            for(String tag : new String[]{"modern_ev_value", "modern_ev_reset"}) {
+                View t = ev_row.findViewWithTag(tag);
+                if( t != null )
+                    ev_row.removeView(t);
+            }
+            if( ev_row_home_lp != null )
+                ev_row.setLayoutParams(ev_row_home_lp);
+            sliders.findViewById(R.id.exposure_seekbar_text).setVisibility(View.VISIBLE);
+        }
+        View iso_label = sliders.findViewWithTag("modern_iso_label");
+        if( iso_label != null )
+            ((ViewGroup)sliders).removeView(iso_label);
+        {
+            // restore the original order: ISO before the EV slider
+            ViewGroup sg = (ViewGroup)sliders;
+            setLayoutGravity(sliders.findViewById(R.id.iso_container), android.view.Gravity.CENTER);
+            View ev = sliders.findViewById(R.id.exposure_container);
+            sg.removeView(ev);
+            sg.addView(ev, sg.indexOfChild(sliders.findViewById(R.id.iso_container)) + 1);
+        }
+        sliders.setBackgroundColor(main_activity.getResources().getColor(R.color.seekbar_background));
+        sliders_home_parent.addView(sliders, Math.min(sliders_home_index, sliders_home_parent.getChildCount()), sliders_home_lp);
     }
 
     public void layoutUI() {
@@ -649,6 +884,10 @@ public class MainUI {
             }
             buttons_permanent.add(main_activity.findViewById(R.id.settings));
             buttons_permanent.add(main_activity.findViewById(R.id.popup));
+            if( modern_gui ) {
+                // Modern GUI: exposure controls live inside the popup card
+                main_activity.findViewById(R.id.exposure).setVisibility(View.GONE);
+            }
             buttons_permanent.add(main_activity.findViewById(R.id.exposure));
             {
                 // Modern GUI only: filter on/off icon (top of the stack)
@@ -1011,7 +1250,11 @@ public class MainUI {
         {
             // set seekbar info
             int width_dp;
-            if( !system_orientation_portrait && (ui_rotation == 0 || ui_rotation == 180) ) {
+            if( modern_gui ) {
+                // Modern GUI: sliders live in the popup card, which has the same width in all orientations
+                width_dp = getMaxHeightDp(false) + 50 - 46 - 124; // leaves room for the EV value and Reset
+            }
+            else if( !system_orientation_portrait && (ui_rotation == 0 || ui_rotation == 180) ) {
                 // landscape
                 width_dp = 350;
             }
@@ -1025,7 +1268,7 @@ public class MainUI {
             }
             if( MyDebug.LOG )
                 Log.d(TAG, "width_dp: " + width_dp);
-            int height_dp = 50;
+            int height_dp = modern_gui ? 32 : 50;
             int width_pixels = (int) (width_dp * scale + 0.5f); // convert dps to pixels
             int height_pixels = (int) (height_dp * scale + 0.5f); // convert dps to pixels
 
@@ -1034,7 +1277,10 @@ public class MainUI {
             view.setTranslationX(0.0f);
             view.setTranslationY(0.0f);
 
-            if( system_orientation_portrait || ui_rotation == 90 || ui_rotation == 270 ) {
+            if( isExposureEmbedded() ) {
+                // Modern GUI: exposure panel is inside the popup card, no offset
+            }
+            else if( system_orientation_portrait || ui_rotation == 90 || ui_rotation == 270 ) {
                 // portrait
                 if( system_orientation_portrait )
                     view.setTranslationY(2*height_pixels);
@@ -1174,6 +1420,17 @@ public class MainUI {
                     layoutParams.removeRule(i);
                 layoutParams.addRule(left_of, top_stack_top_id);
                 layoutParams.addRule(align_parent_bottom, RelativeLayout.TRUE);
+                final int card_margin = (int) (8 * scale + 0.5f);
+                // mockup: card ends 19dp above the corner icons (8dp from the screen edge)
+                final int card_gap_to_stack = system_orientation_portrait ? (int) (19 * scale + 0.5f) : card_margin;
+                setMarginsForSystemUI(layoutParams, 0, 0, card_gap_to_stack, card_margin);
+                // Modern GUI: taller card (about 2/3 of the long side) so more fits without scrolling
+                Point card_display_size = new Point();
+                main_activity.getApplicationInterface().getDisplaySize(card_display_size, true);
+                int long_side = Math.max(card_display_size.x, card_display_size.y);
+                int short_side = Math.min(card_display_size.x, card_display_size.y);
+                // mockup: 560px tall = 597dp
+                layoutParams.height = system_orientation_portrait ? Math.min((int) (599 * scale + 0.5f), (int) (long_side * 0.8f)) : short_side - 2 * card_margin;
             }
             view.setLayoutParams(layoutParams);
 
@@ -1536,7 +1793,7 @@ public class MainUI {
                 if( main_activity.showSwitchMultiCamIcon() )
                     switchMultiCameraButton.setVisibility(visibility);
                 switchVideoButton.setVisibility(visibility);
-                if( main_activity.supportsExposureButton() )
+                if( main_activity.supportsExposureButton() && !modern_gui )
                     exposureButton.setVisibility(visibility);
                 onScreenIcons.setVisibility(visibility, visibility);
                 popupButton.setVisibility(visibility);
@@ -1626,7 +1883,7 @@ public class MainUI {
                 if( main_activity.showSwitchMultiCamIcon() )
                     switchMultiCameraButton.setVisibility(visibility);
                 switchVideoButton.setVisibility(visibility);
-                if( main_activity.supportsExposureButton() )
+                if( main_activity.supportsExposureButton() && !modern_gui )
                     exposureButton.setVisibility(visibility_video); // still allow exposure when recording video
                 onScreenIcons.setVisibility(visibility, visibility_video);
                 if( modern_gui )
@@ -2074,6 +2331,7 @@ public class MainUI {
     public void setupExposureUI() {
         if( MyDebug.LOG )
             Log.d(TAG, "setupExposureUI");
+        PopupView.modern_style = modern_gui;
         test_ui_buttons.clear();
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(main_activity);
         final Preview preview = main_activity.getPreview();
@@ -2122,11 +2380,23 @@ public class MainUI {
         int max_width_dp = getMaxHeightDp(true);
         if( total_width_dp > max_width_dp )
             total_width_dp = max_width_dp;
+        // Modern GUI: ISO options wrap as chips across the full card width (5 per row)
+        final boolean modern_iso = modern_gui && isExposureEmbedded() && popup_view != null;
+        if( modern_iso )
+            total_width_dp = (int) (popup_view.getTotalWidth() / main_activity.getResources().getDisplayMetrics().density);
         if( MyDebug.LOG )
             Log.d(TAG, "total_width_dp: " + total_width_dp);
 
         // n.b., we hardcode the string "ISO" as this isn't a user displayed string, rather it's used to filter out "ISO" included in old Camera API parameters
-        iso_buttons = PopupView.createButtonOptions(iso_buttons_container, main_activity, total_width_dp, test_ui_buttons, supported_isos, -1, -1, "ISO", false, current_iso, 0, "TEST_ISO", new PopupView.ButtonOptionsPopupListener() {
+        ViewGroup iso_parent = iso_buttons_container;
+        if( modern_iso ) {
+            // iso_buttons is a RelativeLayout, which would stack multiple rows on top of each other
+            LinearLayout column = new LinearLayout(main_activity);
+            column.setOrientation(LinearLayout.VERTICAL);
+            iso_buttons_container.addView(column);
+            iso_parent = column;
+        }
+        iso_buttons = PopupView.createButtonOptions(iso_parent, main_activity, total_width_dp, test_ui_buttons, supported_isos, -1, -1, "ISO", false, current_iso, modern_iso ? 5 : 0, "TEST_ISO", new PopupView.ButtonOptionsPopupListener() {
             @Override
             public void onClick(String option) {
                 if( MyDebug.LOG )
@@ -2424,6 +2694,17 @@ public class MainUI {
             clearSelectionState();
 
             popup_view_is_open = false;
+            if( isExposureEmbedded() ) {
+                closeExposureUI();
+                restoreExposureFromPopup();
+            }
+            main_activity.findViewById(R.id.popup).setForeground(null);
+            if( modern_gui ) {
+                // the card background/padding would otherwise remain visible as an empty strip
+                View popup_container = main_activity.findViewById(R.id.popup_container);
+                popup_container.setBackground(null);
+                popup_container.setPadding(0, 0, 0, 0);
+            }
             /* Not destroying the popup doesn't really gain any performance.
              * Also there are still outstanding bugs to fix if we wanted to do this:
              *   - Not resetting the popup menu when switching between photo and video mode. See test testVideoPopup().
@@ -2462,6 +2743,7 @@ public class MainUI {
         if( popupIsOpen() ) {
             closePopup();
         }
+        restoreExposureFromPopup(); // never destroy the exposure panel along with the popup
         ViewGroup popup_container = main_activity.findViewById(R.id.popup_container);
         popup_container.removeAllViews();
         popup_view = null;
@@ -2653,9 +2935,28 @@ public class MainUI {
 
         final long time_s = System.currentTimeMillis();
 
-        {
+        if( popup_view != null && popup_view_modern != modern_gui ) {
+            // style changed since the cached popup was built
+            destroyPopup();
+        }
+        PopupView.modern_style = modern_gui;
+        if( modern_gui ) {
+            // Modern GUI: rounded, slightly see-through card
+            final float scale = main_activity.getResources().getDisplayMetrics().density;
+            GradientDrawable card = new GradientDrawable();
+            card.setColor(0xE6181818);
+            card.setCornerRadius(20 * scale);
+            popup_container.setBackground(card);
+            // mockup: 14px (15dp) padding, 10px (11dp) at the bottom
+            int pad = (int) (15 * scale + 0.5f);
+            popup_container.setPadding(pad, pad, pad, (int) (11 * scale + 0.5f));
+            popup_container.setVerticalScrollBarEnabled(false); // mockup has no scrollbar (it covered the right-hand controls)
+        }
+        else {
             // prevent popup being transparent
             popup_container.setBackgroundColor(Color.argb(230, 0, 0, 0));
+            popup_container.setPadding(0, 0, 0, 0);
+            popup_container.setVerticalScrollBarEnabled(true);
         }
 
         if( popup_view == null ) {
@@ -2663,6 +2964,7 @@ public class MainUI {
                 Log.d(TAG, "create new popup_view");
             test_ui_buttons.clear();
             popup_view = new PopupView(main_activity);
+            popup_view_modern = modern_gui;
             popup_container.addView(popup_view);
         }
         else {
@@ -2671,6 +2973,25 @@ public class MainUI {
             popup_view.setVisibility(View.VISIBLE);
         }
         popup_view_is_open = true;
+
+        if( modern_gui ) {
+            // Modern GUI: show the popup icon as active (ring) while the card is open
+            final float rs = main_activity.getResources().getDisplayMetrics().density;
+            GradientDrawable ring = new GradientDrawable();
+            ring.setShape(GradientDrawable.OVAL);
+            ring.setColor(Color.TRANSPARENT);
+            ring.setStroke((int) (1.5f * rs + 0.5f), 0xFFFFFFFF);
+            main_activity.findViewById(R.id.popup).setForeground(ring);
+            // Modern GUI: force the card content to the full card width
+            popup_view.setLayoutParams(new android.widget.FrameLayout.LayoutParams(popup_view.getTotalWidth(), ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        if( modern_gui && main_activity.supportsExposureButton() ) {
+            // Modern GUI: exposure controls are the first section of the popup card
+            embedExposureInPopup();
+            setupExposureUI();
+            updateModernEvValue();
+        }
 
         if (main_activity.getBluetoothRemoteControl().remoteEnabled()) {
             initRemoteControlForPopup();

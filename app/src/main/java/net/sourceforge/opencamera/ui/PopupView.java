@@ -32,6 +32,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.InsetDrawable;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -98,6 +100,11 @@ public class PopupView extends LinearLayout {
         boolean small_screen = false;
         total_width_dp = 280;
         int max_width_dp = main_activity.getMainUI().getMaxHeightDp(false);
+        if( modern_style ) {
+            // Modern GUI: card spans the short side of the screen, less 8dp margins and 15dp padding each side
+            total_width_dp = max_width_dp + 50 - 46;
+            max_width_dp = total_width_dp;
+        }
         if( total_width_dp > max_width_dp ) {
             total_width_dp = max_width_dp;
             small_screen = true;
@@ -191,10 +198,10 @@ public class PopupView extends LinearLayout {
             final boolean use_expanded_menu = false;
             final List<String> photo_modes = new ArrayList<>();
             final List<MyApplicationInterface.PhotoMode> photo_mode_values = new ArrayList<>();
-            photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_standard_full : R.string.photo_mode_standard) );
+            photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_standard_full : R.string.photo_mode_standard) );
             photo_mode_values.add( MyApplicationInterface.PhotoMode.Standard );
             if( main_activity.supportsNoiseReduction() ) {
-                photo_modes.add(getResources().getString(use_expanded_menu ? R.string.photo_mode_noise_reduction_full : R.string.photo_mode_noise_reduction));
+                photo_modes.add(getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_noise_reduction_full : R.string.photo_mode_noise_reduction));
                 photo_mode_values.add(MyApplicationInterface.PhotoMode.NoiseReduction);
             }
             if( main_activity.supportsDRO() ) {
@@ -206,39 +213,39 @@ public class PopupView extends LinearLayout {
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.HDR );
             }
             if( main_activity.supportsPanorama() ) {
-                photo_modes.add(getResources().getString(use_expanded_menu ? R.string.photo_mode_panorama_full : R.string.photo_mode_panorama));
+                photo_modes.add(getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_panorama_full : R.string.photo_mode_panorama));
                 photo_mode_values.add(MyApplicationInterface.PhotoMode.Panorama);
             }
             if( main_activity.supportsFastBurst() ) {
-                photo_modes.add(getResources().getString(use_expanded_menu ? R.string.photo_mode_fast_burst_full : R.string.photo_mode_fast_burst));
+                photo_modes.add(getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_fast_burst_full : R.string.photo_mode_fast_burst));
                 photo_mode_values.add(MyApplicationInterface.PhotoMode.FastBurst);
             }
             if( main_activity.supportsExpoBracketing() ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_expo_bracketing_full : R.string.photo_mode_expo_bracketing) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_expo_bracketing_full : R.string.photo_mode_expo_bracketing) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.ExpoBracketing );
             }
             if( main_activity.supportsFocusBracketing() ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_focus_bracketing_full : R.string.photo_mode_focus_bracketing) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_focus_bracketing_full : R.string.photo_mode_focus_bracketing) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.FocusBracketing );
             }
             if( main_activity.supportsCameraExtension(CameraExtensionCharacteristics.EXTENSION_AUTOMATIC) ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_x_auto_full : R.string.photo_mode_x_auto) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_x_auto_full : R.string.photo_mode_x_auto) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.X_Auto );
             }
             if( main_activity.supportsCameraExtension(CameraExtensionCharacteristics.EXTENSION_HDR) ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_x_hdr_full : R.string.photo_mode_x_hdr) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_x_hdr_full : R.string.photo_mode_x_hdr) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.X_HDR );
             }
             if( main_activity.supportsCameraExtension(CameraExtensionCharacteristics.EXTENSION_NIGHT) ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_x_night_full : R.string.photo_mode_x_night) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_x_night_full : R.string.photo_mode_x_night) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.X_Night );
             }
             if( main_activity.supportsCameraExtension(CameraExtensionCharacteristics.EXTENSION_BOKEH) ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_x_bokeh_full : R.string.photo_mode_x_bokeh) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_x_bokeh_full : R.string.photo_mode_x_bokeh) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.X_Bokeh );
             }
             if( main_activity.supportsCameraExtension(CameraExtensionCharacteristics.EXTENSION_BEAUTY) ) {
-                photo_modes.add( getResources().getString(use_expanded_menu ? R.string.photo_mode_x_beauty_full : R.string.photo_mode_x_beauty) );
+                photo_modes.add( getResources().getString((use_expanded_menu || modern_style) ? R.string.photo_mode_x_beauty_full : R.string.photo_mode_x_beauty) );
                 photo_mode_values.add( MyApplicationInterface.PhotoMode.X_Beauty );
             }
             if( preview.isVideo() ) {
@@ -275,7 +282,7 @@ public class PopupView extends LinearLayout {
                     if( MyDebug.LOG )
                         Log.d(TAG, "PopupView time 6: " + (System.nanoTime() - debug_time));
 
-                    addButtonOptionsToPopup(photo_modes, -1, -1, "", current_mode, 4, "TEST_PHOTO_MODE", new ButtonOptionsPopupListener() {
+                    addButtonOptionsToPopup(photo_modes, -1, -1, "", current_mode, modern_style ? 3 : 4, "TEST_PHOTO_MODE", new ButtonOptionsPopupListener() {
                         @Override
                         public void onClick(String option) {
                             if( MyDebug.LOG )
@@ -346,11 +353,28 @@ public class PopupView extends LinearLayout {
 
             if( main_activity.supportsAutoStabilise() && !main_activity.getMainUI().getOnScreenIcons().showAutoLevelIcon() ) {
                 // don't show auto-stabilise checkbox on popup if there's an on-screen icon
-                CheckBox checkBox = new CheckBox(main_activity);
+                final CompoundButton checkBox;
+                if( modern_style ) {
+                    // Modern GUI: a switch on the right, like the other toggles
+                    @SuppressLint("InflateParams")
+                    final View switch_view = LayoutInflater.from(context).inflate(R.layout.popupview_switch, null);
+                    SwitchCompat sw = switch_view.findViewById(R.id.popupview_switch);
+                    styleModernSwitch(sw, scale);
+                    checkBox = sw;
+                }
+                else {
+                    checkBox = new CheckBox(main_activity);
+                }
                 checkBox.setText(getResources().getString(R.string.preference_auto_stabilise));
-                checkBox.setTextSize(TypedValue.COMPLEX_UNIT_SP, standard_text_size_dip);
-                checkBox.setTextColor(Color.WHITE);
-                {
+                if( !modern_style ) {
+                    checkBox.setTextSize(TypedValue.COMPLEX_UNIT_SP, standard_text_size_dip);
+                    checkBox.setTextColor(Color.WHITE);
+                }
+                if( modern_style ) {
+                    addModernDivider("rows");
+                    checkBox.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                }
+                else {
                     // align the checkbox a bit better
                     LayoutParams params = new LayoutParams(
                             LayoutParams.MATCH_PARENT,
@@ -1272,12 +1296,49 @@ public class PopupView extends LinearLayout {
         public abstract void onClick(String option);
     }
 
+    /** Modern GUI: label on the left, switch on the right. */
+    private static void styleModernSwitch(SwitchCompat sw, float scale) {
+        sw.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        sw.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15.0f);
+        sw.setTextColor(0xFFEEEEEE);
+        final int pad = (int) (2 * scale + 0.5f);
+        sw.setPadding(pad, 0, pad, 0);
+        sw.setMinHeight((int) (43 * scale + 0.5f));
+        android.content.res.ColorStateList thumb = new android.content.res.ColorStateList(
+                new int[][]{ new int[]{android.R.attr.state_checked}, new int[]{} }, new int[]{ 0xFF111111, 0xFFDDDDDD });
+        android.content.res.ColorStateList track = new android.content.res.ColorStateList(
+                new int[][]{ new int[]{android.R.attr.state_checked}, new int[]{} }, new int[]{ 0xFFECECEC, 0xFF555555 });
+        sw.setThumbTintList(thumb);
+        sw.setTrackTintList(track);
+    }
+
+    /** Modern GUI: thin divider line between groups of controls. */
+    private String modern_last_group;
+    private void addModernDivider(String group) {
+        if( !modern_style )
+            return;
+        if( getChildCount() > 0 && modern_last_group != null && !group.equals(modern_last_group) ) {
+            final float scale = getResources().getDisplayMetrics().density;
+            View line = new View(getContext());
+            line.setBackgroundColor(0x1AFFFFFF);
+            LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, Math.max(1, (int) (scale + 0.5f)));
+            final int m = (int) (9 * scale + 0.5f); // mockup: 8px section padding either side of the line
+            lp.setMargins(0, m, 0, m);
+            addView(line, lp);
+        }
+        modern_last_group = group;
+    }
+
     private void addCheckBox(Context context, float scale, CharSequence text, boolean checked, CompoundButton.OnCheckedChangeListener listener) {
         @SuppressLint("InflateParams")
         final View switch_view = LayoutInflater.from(context).inflate(R.layout.popupview_switch, null);
         final SwitchCompat checkBox = switch_view.findViewById(R.id.popupview_switch);
         checkBox.setText(text);
-        {
+        if( modern_style ) {
+            addModernDivider("rows");
+            styleModernSwitch(checkBox, scale);
+        }
+        else {
             // align the checkbox a bit better
             checkBox.setGravity(Gravity.RIGHT);
             LayoutParams params = new LayoutParams(
@@ -1301,6 +1362,13 @@ public class PopupView extends LinearLayout {
      *                            created if necessary.
      */
     private void addButtonOptionsToPopup(List<String> supported_options, int icons_id, int values_id, String prefix_string, String current_value, int max_buttons_per_row, String test_key, final ButtonOptionsPopupListener listener) {
+        if( modern_style && icons_id != -1 && supported_options != null && !prefix_string.isEmpty() ) {
+            // Modern GUI: label icon rows too ("FLASH", "FOCUS")
+            String label = prefix_string;
+            if( label.toLowerCase(java.util.Locale.ROOT).endsWith(" mode") )
+                label = label.substring(0, label.length() - " mode".length());
+            addTitleToPopup(label);
+        }
         if(MyDebug.LOG)
             Log.d(TAG, "addButtonOptionsToPopup");
         MainActivity main_activity = (MainActivity)this.getContext();
@@ -1319,6 +1387,8 @@ public class PopupView extends LinearLayout {
             final long debug_time = System.nanoTime();
             LinearLayout ll2 = new LinearLayout(context);
             ll2.setOrientation(LinearLayout.HORIZONTAL);
+            if( modern_style && icons_id != -1 )
+                ll2.setBackground(modernTrack(context)); // Modern GUI: segmented-control track behind icon rows
             if( MyDebug.LOG )
                 Log.d(TAG, "addButtonOptionsToPopup time 1: " + (System.nanoTime() - debug_time));
             try(TypedArray icons = icons_id != -1 ? context.getResources().obtainTypedArray(icons_id) : null) {
@@ -1376,6 +1446,8 @@ public class PopupView extends LinearLayout {
                         parent.addView(ll2);
                         ll2 = new LinearLayout(context);
                         ll2.setOrientation(LinearLayout.HORIZONTAL);
+                        if( modern_style && icons_id != -1 )
+                            ll2.setBackground(modernTrack(context));
 
                         int n_remaining = supported_options.size() - button_indx;
                         if( MyDebug.LOG )
@@ -1427,6 +1499,14 @@ public class PopupView extends LinearLayout {
                         Log.d(TAG, "button_string: " + button_string);
                     if( MyDebug.LOG )
                         Log.d(TAG, "addButtonOptionsToPopup time 2.105: " + (System.nanoTime() - debug_time));
+                    if( modern_style && resource != -1 ) {
+                        // Modern GUI: modes whose icon is just tiny text ("AF", "MF"...) are shown as real text
+                        String text = modernIconText(supported_option);
+                        if( text != null ) {
+                            resource = -1;
+                            button_string = text;
+                        }
+                    }
                     View view;
                     if( resource != -1 ) {
                         ImageButton image_button = new ImageButton(context);
@@ -1440,8 +1520,11 @@ public class PopupView extends LinearLayout {
 
                         //image_button.setImageResource(resource);
                         final MainActivity main_activity = (MainActivity)context;
-                        Bitmap bm = main_activity.getPreloadedBitmap(resource);
-                        if( bm != null )
+                        final int modern_icon = modern_style ? modernIcon(supported_option) : 0;
+                        Bitmap bm = modern_icon != 0 ? null : main_activity.getPreloadedBitmap(resource);
+                        if( modern_icon != 0 )
+                            image_button.setImageResource(modern_icon); // Modern GUI: slimmer icons, as in the mockup
+                        else if( bm != null )
                             image_button.setImageBitmap(bm);
                         else {
                             if( MyDebug.LOG )
@@ -1451,7 +1534,8 @@ public class PopupView extends LinearLayout {
                             Log.d(TAG, "addButtonOptionsToPopup time 2.13: " + (System.nanoTime() - debug_time));
                         image_button.setScaleType(ScaleType.FIT_CENTER);
                         image_button.setBackgroundColor(Color.TRANSPARENT);
-                        final int padding = (int) (10 * scale + 0.5f); // convert dps to pixels
+                        // Modern GUI: 20dp icon box in a 44dp row (mockup: 20px icons in 36px buttons)
+                        final int padding = (int) ((modern_style ? 12 : 10) * scale + 0.5f); // convert dps to pixels
                         view.setPadding(padding, padding, padding, padding);
                     }
                     else {
@@ -1464,8 +1548,20 @@ public class PopupView extends LinearLayout {
                         buttons.add(view);
                         ll2.addView(view);
 
-                        button.setText(button_string);
-                        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, button_text_size_dip);
+                        if( modern_style ) {
+                            button.setAllCaps(false);
+                            if( icons_id != -1 ) {
+                                button.setText(button_string); // e.g. "AF" in the focus row
+                                button.setTag(R.id.button, "modern_in_track");
+                                button.setTypeface(null, Typeface.BOLD);
+                                button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f);
+                            }
+                            else
+                                button.setText(modernLabel(button_string));
+                        }
+                        else
+                            button.setText(button_string);
+                        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, modern_style ? ("modern_in_track".equals(button.getTag(R.id.button)) ? 12.5f : 13.0f) : button_text_size_dip);
                         button.setTextColor(Color.WHITE);
                         // need 0 padding so we have enough room to display text for ISO buttons, when there are 6 ISO settings
                         final int padding = (int) (0 * scale + 0.5f); // convert dps to pixels
@@ -1478,7 +1574,7 @@ public class PopupView extends LinearLayout {
                     params.width = button_width;
                     // be careful of making the height too smaller, as harder to touch buttons; remember that this also affects the
                     // ISO buttons on exposure panel, and not just the main popup!
-                    params.height = (int) (55 * ((resource != -1) ? scale : scale_font) + 0.5f); // convert dps to pixels
+                    params.height = (int) ((modern_style ? ((resource != -1 || icons_id != -1) ? 44 : 38) : 55) * ((resource != -1) ? scale : scale_font) + 0.5f); // convert dps to pixels
                     view.setLayoutParams(params);
 
                     view.setContentDescription(button_string);
@@ -1548,12 +1644,190 @@ public class PopupView extends LinearLayout {
 
             if( MyDebug.LOG )
                 Log.d(TAG, "addButtonOptionsToPopup time 4: " + (System.nanoTime() - debug_time));
+
+            if( modern_style && max_buttons_per_row > 0 && !buttons.isEmpty() ) {
+                boolean all_text = true;
+                for(View b : buttons) {
+                    if( !(b instanceof Button) ) {
+                        all_text = false;
+                        break;
+                    }
+                }
+                if( all_text )
+                    repackAsChips(parent, context, buttons, total_width_dp);
+            }
         }
         return buttons;
     }
 
+    /** Modern GUI styling for the popup (and the ISO buttons of the exposure panel); set by MainUI. */
+    public static boolean modern_style;
+    private static final int MODERN_SELECTED_BG = 0xFFECECEC;
+    private static final int MODERN_SELECTED_FG = 0xFF111111;
+    private static final int MODERN_FG = 0xFFDDDDDD;
+    public static final int MODERN_TITLE_FG = 0xFF9A9A9A;
+
+    /** Modern GUI: re-flow text options as chips sized to their label (left aligned, wrapping),
+     *  instead of equal-width grid cells.
+     */
+    private static void repackAsChips(ViewGroup parent, Context context, List<View> buttons, int total_width_dp) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        final int avail = (int) ((total_width_dp - 10) * scale + 0.5f); // a little slack so chips don't touch the card edge
+        final int pad = (int) (12 * scale + 0.5f);
+        final int inset = (int) (3 * scale + 0.5f); // matches the chip/pill InsetDrawable
+        int insert_at = -1;
+        for(View b : buttons) {
+            ViewGroup row = (ViewGroup)b.getParent();
+            if( row != null ) {
+                row.removeView(b);
+                if( row.getChildCount() == 0 && row.getParent() == parent ) {
+                    int idx = parent.indexOfChild(row);
+                    if( insert_at == -1 || idx < insert_at )
+                        insert_at = idx;
+                    parent.removeView(row);
+                }
+            }
+        }
+        if( insert_at == -1 )
+            insert_at = parent.getChildCount();
+        LinearLayout row = null;
+        int used = 0;
+        for(View v : buttons) {
+            Button b = (Button)v;
+            b.setTypeface(null, Typeface.NORMAL);
+            b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.0f);
+            int w = (int) Math.ceil(b.getPaint().measureText(b.getText().toString())) + 2 * pad + 2 * inset;
+            w = Math.min(w, avail);
+            if( row == null || used + w > avail ) {
+                row = new LinearLayout(context);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                parent.addView(row, insert_at++);
+                used = 0;
+            }
+            int h = b.getLayoutParams() != null ? b.getLayoutParams().height : (int) (40 * scale + 0.5f);
+            b.setPadding(pad, 0, pad, 0);
+            row.addView(b, new LinearLayout.LayoutParams(w, h));
+            used += w;
+        }
+    }
+
+    /** Prev/next arrows: hidden at the ends in the original GUI; dimmed (but kept in place) in the Modern GUI. */
+    private static void setArrowState(Button button, boolean available) {
+        if( modern_style ) {
+            button.setVisibility(View.VISIBLE);
+            button.setEnabled(available);
+            button.setAlpha(available ? 1.0f : 0.3f);
+        }
+        else {
+            button.setVisibility(available ? View.VISIBLE : View.INVISIBLE);
+        }
+    }
+
+    /** Modern GUI: "4080 x 2296 (9.37MP)" -> "4080 × 2296 · 9.4 MP". */
+    private static String modernValue(String value) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^(\\d+) ?x ?(\\d+) ?\\((\\d+(?:\\.\\d+)?) ?MP\\)(.*)$").matcher(value);
+        if( m.matches() ) {
+            double mp = Double.parseDouble(m.group(3));
+            return m.group(1) + " \u00D7 " + m.group(2) + " \u00B7 " + String.format(java.util.Locale.ROOT, "%.1f", mp) + " MP" + m.group(4);
+        }
+        return value;
+    }
+
+    private static int modernIcon(String option) {
+        switch( option ) {
+            case "flash_off": return R.drawable.ic_modern_flash_off;
+            case "flash_auto":
+            case "flash_frontscreen_auto": return R.drawable.ic_modern_flash_auto;
+            case "flash_on":
+            case "flash_frontscreen_on": return R.drawable.ic_modern_flash_on;
+            case "flash_torch":
+            case "flash_frontscreen_torch": return R.drawable.ic_modern_flash_torch;
+            case "focus_mode_macro": return R.drawable.ic_modern_focus_macro;
+            case "focus_mode_locked": return R.drawable.ic_modern_focus_locked;
+            case "focus_mode_infinity": return R.drawable.ic_modern_focus_infinity;
+            case "focus_mode_continuous_picture":
+            case "focus_mode_continuous_video": return R.drawable.ic_modern_focus_continuous;
+            default: return 0;
+        }
+    }
+
+    private static String modernIconText(String option) {
+        switch( option ) {
+            case "focus_mode_auto": return "AF";
+            case "focus_mode_manual2": return "MF";
+            case "focus_mode_fixed": return "FIX";
+            case "focus_mode_edof": return "EDOF";
+            default: return null;
+        }
+    }
+
+    /** Modern GUI: friendlier chip labels - capitalised, sentence case, short. */
+    static String modernLabel(String s) {
+        if( s == null || s.isEmpty() )
+            return s;
+        if( s.equals("m") || s.equals("M") )
+            return "Manual"; // ISO manual
+        String [] words = s.replace("Bracketing", "bracket").split(" ");
+        StringBuilder out = new StringBuilder();
+        for(int i=0;i<words.length;i++) {
+            String w = words[i];
+            boolean acronym = w.length() > 1 && w.equals(w.toUpperCase(java.util.Locale.ROOT));
+            if( i == 0 )
+                w = w.substring(0, 1).toUpperCase(java.util.Locale.getDefault()) + w.substring(1);
+            else if( !acronym )
+                w = w.toLowerCase(java.util.Locale.getDefault());
+            if( i > 0 )
+                out.append(' ');
+            out.append(w);
+        }
+        return out.toString();
+    }
+
+    private static android.graphics.drawable.Drawable modernTrack(Context context) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        GradientDrawable track = new GradientDrawable();
+        track.setColor(0x14FFFFFF);
+        track.setCornerRadius(14 * scale);
+        return track;
+    }
+
     static void setButtonSelected(View view, boolean selected) {
-        view.setAlpha(selected ? ALPHA_BUTTON_SELECTED : ALPHA_BUTTON);
+        if( !modern_style ) {
+            view.setAlpha(selected ? ALPHA_BUTTON_SELECTED : ALPHA_BUTTON);
+            return;
+        }
+        // Modern GUI: the selected option is a light pill, others are plain
+        final float scale = view.getResources().getDisplayMetrics().density;
+        view.setAlpha(1.0f);
+        view.setBackgroundTintList(null); // the app theme tints image button backgrounds grey
+        // setBackground() replaces the view's padding with the drawable's, which would make the
+        // selected icon bigger than the others - so keep the padding as it was
+        final int pl = view.getPaddingLeft(), pt = view.getPaddingTop(), pr = view.getPaddingRight(), pb = view.getPaddingBottom();
+        final int inset = (int) (3 * scale + 0.5f);
+        if( selected ) {
+            GradientDrawable pill = new GradientDrawable();
+            pill.setColor(MODERN_SELECTED_BG);
+            boolean in_track = view instanceof ImageButton || "modern_in_track".equals(view.getTag(R.id.button));
+            pill.setCornerRadius((in_track ? 10 : 17) * scale); // text chips are fully rounded
+            view.setBackground(new InsetDrawable(pill, inset, inset, inset, inset));
+        }
+        else if( view instanceof ImageButton || "modern_in_track".equals(view.getTag(R.id.button)) ) {
+            view.setBackgroundColor(Color.TRANSPARENT); // icons sit on the row's track
+        }
+        else {
+            // text options: faint chip, like the mockup
+            GradientDrawable chip = new GradientDrawable();
+            chip.setColor(0x14FFFFFF);
+            chip.setCornerRadius(17 * scale);
+            view.setBackground(new InsetDrawable(chip, inset, inset, inset, inset));
+        }
+        view.setPadding(pl, pt, pr, pb);
+        if( view instanceof ImageButton ) {
+            ((ImageButton)view).setColorFilter(selected ? MODERN_SELECTED_FG : MODERN_FG);
+        }
+        else if( view instanceof Button ) {
+            ((Button)view).setTextColor(selected ? MODERN_SELECTED_FG : MODERN_FG);
+        }
     }
 
     private void addTitleToPopup(final String title) {
@@ -1563,9 +1837,25 @@ public class PopupView extends LinearLayout {
         final View view = LayoutInflater.from(this.getContext()).inflate(R.layout.popupview_textview, null);
         final TextView text_view = view.findViewById(R.id.text_view);
 
-        text_view.setText(title + ":");
-        text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, title_text_size_dip);
-        text_view.setTypeface(null, Typeface.BOLD);
+        if( modern_style ) {
+            addModernDivider("title:" + title);
+            // Modern GUI: small grey section label instead of a bold title bar
+            final float scale = getResources().getDisplayMetrics().density;
+            text_view.setText(title.toUpperCase(java.util.Locale.getDefault()));
+            text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f);
+            text_view.setTypeface(null, Typeface.NORMAL);
+            text_view.setLetterSpacing(0.08f);
+            text_view.setTextColor(MODERN_TITLE_FG);
+            text_view.setBackgroundColor(Color.TRANSPARENT);
+            text_view.setGravity(Gravity.START);
+            text_view.setIncludeFontPadding(false);
+            text_view.setPadding((int) (2 * scale + 0.5f), 0, 0, (int) (9 * scale + 0.5f));
+        }
+        else {
+            text_view.setText(title + ":");
+            text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, title_text_size_dip);
+            text_view.setTypeface(null, Typeface.BOLD);
+        }
         //text_view.setBackgroundColor(Color.GRAY); // debug
         this.addView(text_view);
         if( MyDebug.LOG )
@@ -1615,12 +1905,92 @@ public class PopupView extends LinearLayout {
             final Button button = button_view.findViewById(R.id.button);
 
             button.setBackgroundColor(Color.TRANSPARENT); // workaround for Android 6 crash!
+            addModernDivider("radio");
             button.setText(title + "...");
+            if( modern_style ) {
+                // Modern GUI: "Name ............ Current value ›"
+                String current = preference_key != null ? sharedPreferences.getString(preference_key, default_value) : current_option_value;
+                String current_entry = "";
+                if( current != null && supported_options_values != null ) {
+                    int idx = supported_options_values.indexOf(current);
+                    if( idx >= 0 && idx < supported_options_entries.size() )
+                        current_entry = supported_options_entries.get(idx);
+                }
+                android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(title);
+                String tail = current_entry + "  \u203A";
+                int start = sb.length();
+                sb.append("\t").append(tail);
+                sb.setSpan(new android.text.style.ForegroundColorSpan(0xFFBBBBBB), start, sb.length(), 0);
+                sb.setSpan(new android.text.style.RelativeSizeSpan(0.93f), start, sb.length(), 0);
+                button.setText(sb);
+                button.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                final float scale = getResources().getDisplayMetrics().density;
+                button.setPadding((int) (2 * scale + 0.5f), 0, (int) (8 * scale + 0.5f), 0); // room for the "›"
+                button.setMinHeight((int) (43 * scale + 0.5f));
+                button.setMinimumHeight((int) (43 * scale + 0.5f));
+                // right-align the value via a tab stop at the far right
+                final Button final_button = button;
+                button.post(() -> {
+                    int w = final_button.getWidth() - final_button.getPaddingLeft() - final_button.getPaddingRight();
+                    float tail_w = final_button.getPaint().measureText(tail) * 0.93f;
+                    if( w > 0 ) {
+                        android.text.SpannableStringBuilder sb2 = new android.text.SpannableStringBuilder(final_button.getText());
+                        sb2.setSpan(new android.text.style.TabStopSpan.Standard((int) (w - tail_w)), 0, sb2.length(), 0);
+                        final_button.setText(sb2);
+                    }
+                });
+            }
             button.setAllCaps(false);
-            button.setTextSize(TypedValue.COMPLEX_UNIT_SP, title_text_size_dip);
+            button.setTextSize(TypedValue.COMPLEX_UNIT_SP, modern_style ? 15.0f : title_text_size_dip);
+            if( modern_style )
+                button.setTypeface(null, Typeface.NORMAL);
             this.addView(button);
             if( MyDebug.LOG )
                 Log.d(TAG, "addRadioOptionsToPopup time 1: " + (System.nanoTime() - debug_time));
+
+            if( modern_style ) {
+                // Modern GUI: tap the row to open the options as chips (instead of a radio list)
+                final LinearLayout chips_holder = new LinearLayout(this.getContext());
+                chips_holder.setOrientation(LinearLayout.VERTICAL);
+                chips_holder.setVisibility(View.GONE);
+                final float scale = getResources().getDisplayMetrics().density;
+                chips_holder.setPadding(0, 0, 0, (int) (6 * scale + 0.5f));
+                button.setOnClickListener(new OnClickListener() {
+                    private boolean created = false;
+                    @Override
+                    public void onClick(View view) {
+                        if( !created ) {
+                            created = true;
+                            String current = preference_key != null ? sharedPreferences.getString(preference_key, default_value) : current_option_value;
+                            int idx = current != null ? supported_options_values.indexOf(current) : -1;
+                            String current_entry = idx >= 0 ? supported_options_entries.get(idx) : "";
+                            createButtonOptions(chips_holder, getContext(), total_width_dp, main_activity.getMainUI().getTestUIButtonsMap(), supported_options_entries, -1, -1, "", true, current_entry, 4, test_key, new ButtonOptionsPopupListener() {
+                                @Override
+                                public void onClick(String option) {
+                                    int i = supported_options_entries.indexOf(option);
+                                    if( i < 0 )
+                                        return;
+                                    String value = supported_options_values.get(i);
+                                    if( preference_key != null ) {
+                                        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(main_activity).edit();
+                                        editor.putString(preference_key, value);
+                                        editor.apply();
+                                    }
+                                    if( listener != null )
+                                        listener.onClick(value);
+                                    else {
+                                        main_activity.updateForSettings(true, title + ": " + option);
+                                        main_activity.closePopup();
+                                    }
+                                }
+                            });
+                        }
+                        chips_holder.setVisibility(chips_holder.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                    }
+                });
+                this.addView(chips_holder);
+                return;
+            }
 
             final RadioGroup rg = new RadioGroup(this.getContext());
             rg.setOrientation(RadioGroup.VERTICAL);
@@ -1773,6 +2143,11 @@ public class PopupView extends LinearLayout {
     }
 
     private void setArrayOptionsText(List<String> supported_options, String title, TextView textView, boolean title_in_options, boolean title_in_options_first_only, int current_index) {
+        if( modern_style ) {
+            // Modern GUI: the name is shown separately on the left
+            textView.setText(modernValue(supported_options.get(current_index)));
+            return;
+        }
         if( title_in_options && !( current_index != 0 && title_in_options_first_only ) )
             textView.setText(title + ": " + supported_options.get(current_index));
         else
@@ -1793,9 +2168,10 @@ public class PopupView extends LinearLayout {
      */
     private void addArrayOptionsToPopup(final List<String> supported_options, final String title, final boolean title_in_options, final boolean title_in_options_first_only, final int current_index, final boolean cyclic, final String test_key, final ArrayOptionsPopupListener listener) {
         if( supported_options != null && current_index != -1 ) {
-            if( !title_in_options ) {
+            if( !title_in_options && !modern_style ) {
                 addTitleToPopup(title);
             }
+            addModernDivider("rows");
 
             final MainActivity main_activity = (MainActivity)this.getContext();
 
@@ -1809,7 +2185,7 @@ public class PopupView extends LinearLayout {
 
             setArrayOptionsText(supported_options, title, text_view, title_in_options, title_in_options_first_only, current_index);
             //text_view.setBackgroundColor(Color.GRAY); // debug
-            text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, standard_text_size_dip);
+            text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, modern_style ? 15.0f : standard_text_size_dip);
             text_view.setSingleLine(true); // if text too long for the button, we'd rather not have wordwrap, even if it means cutting some text off
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
             // Yuck! We want the arrow_button_w to be fairly large so that users can touch the arrow buttons easily, but if
@@ -1823,15 +2199,15 @@ public class PopupView extends LinearLayout {
             final int padding = (int) (0 * scale + 0.5f); // convert dps to pixels
             prev_button.setBackgroundColor(Color.TRANSPARENT); // workaround for Android 6 crash!
             //ll2.addView(prev_button);
-            prev_button.setText("<");
-            prev_button.setTextSize(TypedValue.COMPLEX_UNIT_SP, arrow_text_size_dip);
-            prev_button.setTypeface(null, Typeface.BOLD);
+            prev_button.setText(modern_style ? "\u2039" : "<");
+            prev_button.setTextSize(TypedValue.COMPLEX_UNIT_SP, modern_style ? 22.0f : arrow_text_size_dip);
+            prev_button.setTypeface(null, modern_style ? Typeface.NORMAL : Typeface.BOLD);
             prev_button.setPadding(padding, padding, padding, padding);
             ViewGroup.LayoutParams vg_params = prev_button.getLayoutParams();
             vg_params.width = arrow_button_w;
             vg_params.height = arrow_button_h;
             prev_button.setLayoutParams(vg_params);
-            prev_button.setVisibility( (cyclic || current_index > 0) ? View.VISIBLE : View.INVISIBLE);
+            setArrowState(prev_button, (cyclic || current_index > 0));
             prev_button.setContentDescription( getResources().getString(R.string.previous) + " " + title);
             main_activity.getMainUI().getTestUIButtonsMap().put(test_key + "_PREV", prev_button);
 
@@ -1840,15 +2216,15 @@ public class PopupView extends LinearLayout {
 
             next_button.setBackgroundColor(Color.TRANSPARENT); // workaround for Android 6 crash!
             //ll2.addView(next_button);
-            next_button.setText(">");
-            next_button.setTextSize(TypedValue.COMPLEX_UNIT_SP, arrow_text_size_dip);
-            next_button.setTypeface(null, Typeface.BOLD);
+            next_button.setText(modern_style ? "\u203A" : ">");
+            next_button.setTextSize(TypedValue.COMPLEX_UNIT_SP, modern_style ? 22.0f : arrow_text_size_dip);
+            next_button.setTypeface(null, modern_style ? Typeface.NORMAL : Typeface.BOLD);
             next_button.setPadding(padding, padding, padding, padding);
             vg_params = next_button.getLayoutParams();
             vg_params.width = arrow_button_w;
             vg_params.height = arrow_button_h;
             next_button.setLayoutParams(vg_params);
-            next_button.setVisibility( (cyclic || current_index < supported_options.size()-1) ? View.VISIBLE : View.INVISIBLE);
+            setArrowState(next_button, (cyclic || current_index < supported_options.size()-1));
             next_button.setContentDescription( getResources().getString(R.string.next) + " " + title);
             main_activity.getMainUI().getTestUIButtonsMap().put(test_key + "_NEXT", next_button);
 
@@ -1864,8 +2240,8 @@ public class PopupView extends LinearLayout {
                     int new_index = listener.onClickPrev();
                     if( new_index != -1 ) {
                         setArrayOptionsText(supported_options, title, text_view, title_in_options, title_in_options_first_only, new_index);
-                        prev_button.setVisibility( (cyclic || new_index > 0) ? View.VISIBLE : View.INVISIBLE);
-                        next_button.setVisibility( (cyclic || new_index < supported_options.size()-1) ? View.VISIBLE : View.INVISIBLE);
+                        setArrowState(prev_button, (cyclic || new_index > 0));
+                        setArrowState(next_button, (cyclic || new_index < supported_options.size()-1));
                     }
                 }
             });
@@ -1875,11 +2251,55 @@ public class PopupView extends LinearLayout {
                     int new_index = listener.onClickNext();
                     if( new_index != -1 ) {
                         setArrayOptionsText(supported_options, title, text_view, title_in_options, title_in_options_first_only, new_index);
-                        prev_button.setVisibility( (cyclic || new_index > 0) ? View.VISIBLE : View.INVISIBLE);
-                        next_button.setVisibility( (cyclic || new_index < supported_options.size()-1) ? View.VISIBLE : View.INVISIBLE);
+                        setArrowState(prev_button, (cyclic || new_index > 0));
+                        setArrowState(next_button, (cyclic || new_index < supported_options.size()-1));
                     }
                 }
             });
+
+            if( modern_style ) {
+                // Modern GUI: [name ........ ‹ value ›]
+                @SuppressLint("InflateParams")
+                final View name_holder = LayoutInflater.from(this.getContext()).inflate(R.layout.popupview_textview, null);
+                final TextView name_view = name_holder.findViewById(R.id.text_view);
+                name_view.setText(title.equals("Camera resolution") ? "Resolution" : title);
+                name_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15.0f);
+                name_view.setTextColor(0xFFEEEEEE);
+                name_view.setTypeface(null, Typeface.NORMAL);
+                name_view.setBackgroundColor(Color.TRANSPARENT);
+                name_view.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                name_view.setPadding((int) (2 * scale + 0.5f), 0, 0, 0);
+                ((LinearLayout)ll2).setGravity(Gravity.CENTER_VERTICAL);
+                ((LinearLayout)ll2).addView(name_view, 0, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f));
+
+                LinearLayout.LayoutParams value_params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                value_params.setMargins((int) (6 * scale + 0.5f), 0, (int) (6 * scale + 0.5f), 0);
+                text_view.setLayoutParams(value_params);
+                text_view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.0f);
+                text_view.setTextColor(0xFFBBBBBB);
+                text_view.setMaxWidth((int) (170 * scale + 0.5f));
+                text_view.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                text_view.setOnClickListener(v -> { if( next_button.isEnabled() && next_button.getVisibility() == View.VISIBLE ) next_button.performClick(); });
+
+                final int step = (int) (30 * scale + 0.5f);
+                for(Button b : new Button[]{prev_button, next_button}) {
+                    GradientDrawable round = new GradientDrawable();
+                    round.setShape(GradientDrawable.OVAL);
+                    round.setColor(0x22FFFFFF);
+                    b.setBackground(round);
+                    b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17.0f);
+                    b.setTextColor(0xFFDDDDDD);
+                    b.setMinWidth(0);
+                    b.setMinimumWidth(0);
+                    b.setMinHeight(0);
+                    b.setMinimumHeight(0);
+                    b.setStateListAnimator(null);
+                    LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(step, step);
+                    b.setLayoutParams(bp);
+                }
+                ll2.setMinimumHeight((int) (43 * scale + 0.5f));
+                ll2.setPadding(0, 0, (int) (2 * scale + 0.5f), 0);
+            }
 
             this.addView(ll2);
 
