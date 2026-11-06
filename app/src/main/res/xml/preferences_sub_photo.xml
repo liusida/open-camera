@@ -2,6 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:key="preferences_root">
 
+    <SwitchPreference
+        android:key="preference_filter_bright_clean"
+        android:title="@string/preference_filter_bright_clean"
+        android:summary="@string/preference_filter_bright_clean_summary"
+        android:defaultValue="false"
+        />
+
     <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->
     <ListPreference
         android:key="preference_resolution"

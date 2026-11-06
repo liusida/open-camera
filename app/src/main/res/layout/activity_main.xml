@@ -217,6 +217,22 @@
         android:onClick="clickedPopupSettings"
         />
     
+    <!-- Modern GUI only: toggles the Bright & clean filter -->
+    <ImageButton
+        android:id="@+id/filter_toggle"
+        android:layout_width="@dimen/onscreen_button_size"
+        android:layout_height="@dimen/onscreen_button_size"
+        android:padding="10dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="@string/preference_filter_bright_clean"
+        app:srcCompat="@drawable/ic_filter_toggle"
+        android:background="@color/icons_background"
+        android:backgroundTint="@color/icons_background_tint"
+        android:backgroundTintMode="src_in"
+        android:onClick="clickedFilterToggle"
+        android:visibility="gone"
+        />
+
     <ImageButton
         android:id="@+id/exposure"
         android:layout_width="@dimen/onscreen_button_size"

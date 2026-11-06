@@ -561,6 +561,25 @@ public class PostProcessing {
                 throw new IOException();
             }
         }
+        if( FilterCurves.enabled ) {
+            // "Bright & clean" filter (setting under Photo settings)
+            if( bitmap == null ) {
+                bitmap = ImageUtils.loadBitmapWithRotation(data, true);
+                if( bitmap == null ) {
+                    System.gc();
+                    throw new IOException();
+                }
+            }
+            else if( !bitmap.isMutable() ) {
+                Bitmap mutable = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                bitmap.recycle();
+                bitmap = mutable;
+            }
+            FilterCurves.applyToBitmap(bitmap);
+            if( MyDebug.LOG ) {
+                Log.d(TAG, "Save single image performance: time after filter: " + (System.currentTimeMillis() - time_s));
+            }
+        }
         bitmap = stampImage(request, data, bitmap);
         if( MyDebug.LOG ) {
             Log.d(TAG, "Save single image performance: time after photostamp: " + (System.currentTimeMillis() - time_s));

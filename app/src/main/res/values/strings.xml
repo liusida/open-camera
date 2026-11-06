@@ -133,6 +133,10 @@
     <string name="preference_preview_size">Preview size</string>
     <string name="preference_ui_placement">UI placement</string>
     <string name="preference_modern_gui">Modern GUI</string>
+    <string name="preference_filter_bright_clean">Bright &amp; clean filter</string>
+    <string name="filter_on">Filter: Bright &amp; clean</string>
+    <string name="filter_off">Filter: off</string>
+    <string name="preference_filter_bright_clean_summary">Brighter midtones, protected shadows and highlights, slightly cooler. Applied to the live view (Android 13+) and to saved JPEG photos</string>
     <string name="preference_modern_gui_summary">Clean, minimalist on-screen controls: smaller grouped top icons and grey shutter buttons. Turn off for the original look</string>
     <string name="preference_immersive_mode">Immersive mode</string>
     <string name="preference_show_zoom">Show zoom</string>

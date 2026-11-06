@@ -1297,8 +1297,19 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         return this.mWaterDensity;
     }
 
+    /** Reads the colour filter setting and applies it to the live view (photos read FilterCurves.enabled when saved). */
+    void updateFilter() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        FilterCurves.enabled = sharedPreferences.getBoolean(PreferenceKeys.FilterBrightCleanPreferenceKey, false);
+        if( preview != null )
+            FilterCurves.applyToView(preview.getView(), FilterCurves.enabled);
+        if( mainUI != null )
+            mainUI.updateFilterToggleIcon();
+    }
+
     @Override
     protected void onResume() {
+        updateFilter();
         long debug_time = 0;
         if( MyDebug.LOG ) {
             Log.d(TAG, "onResume");
@@ -2386,6 +2397,15 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         }
     }
 
+    /** Modern GUI: filter icon - toggles the Bright & clean filter (same setting as in Photo settings). */
+    public void clickedFilterToggle(View view) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean enable = !sharedPreferences.getBoolean(PreferenceKeys.FilterBrightCleanPreferenceKey, false);
+        sharedPreferences.edit().putBoolean(PreferenceKeys.FilterBrightCleanPreferenceKey, enable).apply();
+        updateFilter();
+        preview.showToast(null, getResources().getString(enable ? R.string.filter_on : R.string.filter_off), true);
+    }
+
     public void clickedExposure(View view) {
         if( MyDebug.LOG )
             Log.d(TAG, "clickedExposure");
@@ -3055,6 +3075,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
             Log.d(TAG, "updateForSettings: time after check need_reopen: " + (System.currentTimeMillis() - debug_time));
         }
 
+        updateFilter();
         mainUI.layoutUI(); // needed in case we've changed UI placement; or in "top" mode, if we've enabled/disabled on-screen UI icons
         if( MyDebug.LOG ) {
             Log.d(TAG, "updateForSettings: time after layoutUI: " + (System.currentTimeMillis() - debug_time));

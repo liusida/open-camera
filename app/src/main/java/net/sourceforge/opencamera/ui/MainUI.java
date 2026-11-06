@@ -4,6 +4,7 @@ import net.sourceforge.opencamera.MyApplicationInterface;
 import net.sourceforge.opencamera.cameracontroller.CameraController;
 import net.sourceforge.opencamera.MainActivity;
 import net.sourceforge.opencamera.MyDebug;
+import net.sourceforge.opencamera.FilterCurves;
 import net.sourceforge.opencamera.PreferenceKeys;
 import net.sourceforge.opencamera.preview.Preview;
 import net.sourceforge.opencamera.R;
@@ -187,6 +188,13 @@ public class MainUI {
     }
 
     private boolean modern_gui;
+
+    /** Shows the filter icon bright when the filter is on, dimmed when off. */
+    public void updateFilterToggleIcon() {
+        View filter_toggle = main_activity.findViewById(R.id.filter_toggle);
+        filter_toggle.setAlpha(FilterCurves.enabled ? 1.0f : 0.45f);
+        filter_toggle.setContentDescription(main_activity.getResources().getString(FilterCurves.enabled ? R.string.filter_on : R.string.filter_off));
+    }
     private Drawable orig_switch_camera_background;
     private ColorStateList orig_switch_camera_background_tint;
 
@@ -263,20 +271,38 @@ public class MainUI {
         if( preview_h == 0 || parent_h == 0 )
             return;
         final float scale = main_activity.getResources().getDisplayMetrics().density;
-        final int bottom_needed = (int) (110 * scale + 0.5f); // shutter row + gap to navigation bar
-        boolean portrait = main_activity.getSystemOrientation() == MainActivity.SystemOrientation.PORTRAIT;
-        boolean pin = modern_gui && portrait && (parent_h - preview_h)/2 < bottom_needed;
+        final int controls_needed = (int) (110 * scale + 0.5f); // shutter row + gap to navigation bar
+        // pin towards the side opposite the controls: top (portrait), left (landscape), right (reverse landscape)
+        MainActivity.SystemOrientation orientation = main_activity.getSystemOrientation();
+        boolean portrait = orientation == MainActivity.SystemOrientation.PORTRAIT;
+        int pin_rule = portrait ? RelativeLayout.ALIGN_PARENT_TOP :
+                orientation == MainActivity.SystemOrientation.REVERSE_LANDSCAPE ? RelativeLayout.ALIGN_PARENT_RIGHT : RelativeLayout.ALIGN_PARENT_LEFT;
+        int centre_rule = portrait ? RelativeLayout.CENTER_HORIZONTAL : RelativeLayout.CENTER_VERTICAL;
+        int preview_len = portrait ? preview_h : preview.getWidth();
+        int parent_len = portrait ? parent_h : parent.getWidth();
+        boolean pin = modern_gui && (parent_len - preview_len)/2 < controls_needed;
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)preview.getLayoutParams();
-        boolean pinned = layoutParams.getRule(RelativeLayout.ALIGN_PARENT_TOP) != 0;
-        if( pin != pinned ) {
+        boolean changed = false;
+        int [][] wanted_rules = {
+                {RelativeLayout.CENTER_IN_PARENT, pin ? 0 : RelativeLayout.TRUE},
+                {RelativeLayout.CENTER_HORIZONTAL, pin && centre_rule == RelativeLayout.CENTER_HORIZONTAL ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.CENTER_VERTICAL, pin && centre_rule == RelativeLayout.CENTER_VERTICAL ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_TOP, pin && pin_rule == RelativeLayout.ALIGN_PARENT_TOP ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_LEFT, pin && pin_rule == RelativeLayout.ALIGN_PARENT_LEFT ? RelativeLayout.TRUE : 0},
+                {RelativeLayout.ALIGN_PARENT_RIGHT, pin && pin_rule == RelativeLayout.ALIGN_PARENT_RIGHT ? RelativeLayout.TRUE : 0},
+        };
+        for(int [] rule : wanted_rules) {
+            if( layoutParams.getRule(rule[0]) != rule[1] ) {
+                layoutParams.addRule(rule[0], rule[1]);
+                changed = true;
+            }
+        }
+        if( changed ) {
             if( MyDebug.LOG )
-                Log.d(TAG, "modern gui: pin preview to top: " + pin);
-            layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, pin ? 0 : RelativeLayout.TRUE);
-            layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, pin ? RelativeLayout.TRUE : 0);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, pin ? RelativeLayout.TRUE : 0);
+                Log.d(TAG, "modern gui: pin preview: " + pin);
             preview.setLayoutParams(layoutParams);
         }
-        int scrim_visibility = pin && !top_icons_stacked ? View.VISIBLE : View.GONE;
+        int scrim_visibility = pin && portrait && !top_icons_stacked ? View.VISIBLE : View.GONE;
         if( scrim.getVisibility() != scrim_visibility )
             scrim.setVisibility(scrim_visibility);
     }
@@ -565,6 +591,16 @@ public class MainUI {
             buttons_permanent.add(main_activity.findViewById(R.id.settings));
             buttons_permanent.add(main_activity.findViewById(R.id.popup));
             buttons_permanent.add(main_activity.findViewById(R.id.exposure));
+            {
+                // Modern GUI only: filter on/off icon (top of the stack)
+                View filter_toggle = main_activity.findViewById(R.id.filter_toggle);
+                if( !modern_gui )
+                    filter_toggle.setVisibility(View.GONE);
+                else if( filter_toggle.getVisibility() == View.GONE && !immersive_mode )
+                    filter_toggle.setVisibility(View.VISIBLE);
+                updateFilterToggleIcon();
+                buttons_permanent.add(filter_toggle);
+            }
             //buttons_permanent.add(main_activity.findViewById(R.id.switch_video));
             //buttons_permanent.add(main_activity.findViewById(R.id.switch_camera));
 
@@ -697,16 +733,18 @@ public class MainUI {
                 }
             }
             top_icons_stacked = false;
-            if( modern_top && system_orientation_portrait ) {
-                // Modern GUI (portrait): move the top icons into a small vertical stack in the
-                // bottom-left corner, beside the video button, vertically centred on the shutter.
+            if( modern_top ) {
+                // Modern GUI: move the top icons into a small stack in the corner beside the video
+                // button, centred on the shutter (portrait: vertical stack at the bottom-left;
+                // landscape: horizontal row under the controls). Rules/margins use the
+                // landscape-named variables, so this follows the device orientation.
                 // Only if few icons are visible; otherwise keep the top row.
                 List<View> visible = new ArrayList<>();
                 for(View this_view : buttons_permanent) {
                     if( this_view.getVisibility() == View.VISIBLE )
                         visible.add(this_view);
                 }
-                if( !visible.isEmpty() && visible.size() <= 3 ) {
+                if( !visible.isEmpty() && visible.size() <= 4 ) {
                     top_icons_stacked = true;
                     final int small_size = (int) (32 * scale + 0.5f);
                     final int small_padding = (int) (7 * scale + 0.5f); // 18dp glyph
@@ -714,15 +752,17 @@ public class MainUI {
                     final int shutter_half = (int) (50 * scale + 0.5f); // take_photo is 100dp
                     // centre the stack on the shutter centre
                     int bottom_margin = navigation_gap + shutter_half - (visible.size() * small_size) / 2;
+                    // don't run off the screen edge if the stack is longer than the shutter
+                    bottom_margin = Math.max(bottom_margin, navigation_gap + (int) (4 * scale + 0.5f));
                     // buttons_permanent is ordered settings, popup, exposure: settings at the bottom
                     for(View this_view : visible) {
                         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)this_view.getLayoutParams();
                         int [] rules = lp.getRules();
                         for(int i=0;i<rules.length;i++)
                             lp.removeRule(i);
-                        lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-                        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-                        lp.setMargins(left_margin, 0, 0, bottom_margin);
+                        lp.addRule(align_parent_right, RelativeLayout.TRUE);
+                        lp.addRule(align_parent_bottom, RelativeLayout.TRUE);
+                        setMarginsForSystemUI(lp, 0, 0, bottom_margin, left_margin);
                         lp.width = small_size;
                         lp.height = small_size;
                         this_view.setLayoutParams(lp);
@@ -1061,13 +1101,14 @@ public class MainUI {
                 // limit height so doesn't take up full height of screen
                 layoutParams.height = display_height;
             }
-            if( top_icons_stacked && system_orientation_portrait ) {
-                // Modern GUI: icons are in the bottom-left stack, so open the popup just above it
+            if( top_icons_stacked ) {
+                // Modern GUI: icons are in the corner stack, so open the popup next to it
+                // (portrait: above the stack; landscape: to the left of the row)
                 int [] rules = layoutParams.getRules();
                 for(int i=0;i<rules.length;i++)
                     layoutParams.removeRule(i);
-                layoutParams.addRule(RelativeLayout.ABOVE, top_stack_top_id);
-                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+                layoutParams.addRule(left_of, top_stack_top_id);
+                layoutParams.addRule(align_parent_bottom, RelativeLayout.TRUE);
             }
             view.setLayoutParams(layoutParams);
 
@@ -1436,6 +1477,8 @@ public class MainUI {
                 popupButton.setVisibility(visibility);
                 galleryButton.setVisibility(visibility);
                 settingsButton.setVisibility(visibility);
+                if( modern_gui )
+                    main_activity.findViewById(R.id.filter_toggle).setVisibility(visibility);
                 if( MyDebug.LOG ) {
                     Log.d(TAG, "has_zoom: " + main_activity.getPreview().supportsZoom());
                 }
@@ -1521,6 +1564,8 @@ public class MainUI {
                 if( main_activity.supportsExposureButton() )
                     exposureButton.setVisibility(visibility_video); // still allow exposure when recording video
                 onScreenIcons.setVisibility(visibility, visibility_video);
+                if( modern_gui )
+                    main_activity.findViewById(R.id.filter_toggle).setVisibility(visibility);
                 if( !(show_gui_photo && show_gui_video) ) {
                     closePopup(); // we still allow the popup when recording video, but need to update the UI (so it only shows flash options), so easiest to just close
                 }
